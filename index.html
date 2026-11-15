@@ -552,6 +552,26 @@ html.focus .focusbar { transform: translate(-50%, 0); opacity: 1; visibility: vi
 #focusRange:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 7px rgba(255,255,255,.22); }
 @media (min-width: 700px) { .focusbar { bottom: calc(40px + env(safe-area-inset-bottom)); gap: 16px; } #focusRange { width: 320px; } }
 @media (prefers-reduced-motion: reduce) { .cinema, .focusbar, header.top, #coachCard, .transport { transition: none !important; } }
+
+/* focus v2: board centred on screen, slider fades after a few seconds, dark low-glare slider */
+#boardbox { transition: transform .55s cubic-bezier(.2,.7,.2,1); }
+html.focus #boardbox { transform: translateY(var(--fy, 0px)); }
+html.focus.fz-idle .focusbar { opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 8px); transition: opacity .7s ease, transform .7s ease, visibility 0s linear .7s; }
+.focusbar { --fz-rest: rgba(255,255,255,.06); --fz-fill: rgba(255,255,255,.28); --fz-thumb: #0f1012; --fz-ring: 0 0 0 1.5px rgba(255,255,255,.34); --fz-ico: rgba(255,255,255,.24); }
+.focusbar .fz-ico { box-shadow: inset 0 0 0 1.4px var(--fz-ico); }
+.focusbar .fz-ico i { background: var(--fz-ico); }
+#focusRange::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--fz-fill) 0 var(--p), var(--fz-rest) var(--p) 100%); }
+#focusRange::-webkit-slider-thumb { background: var(--fz-thumb); box-shadow: var(--fz-ring), 0 4px 10px rgba(0,0,0,.45); }
+#focusRange::-moz-range-track { background: var(--fz-rest); }
+#focusRange::-moz-range-progress { background: var(--fz-fill); }
+#focusRange::-moz-range-thumb { background: var(--fz-thumb); box-shadow: var(--fz-ring); }
+#focusRange:focus-visible::-webkit-slider-thumb { box-shadow: var(--fz-ring), 0 0 0 6px rgba(255,255,255,.08); }
+/* Hairline: thin 2px line, small 16px dark dot (the touch area stays the full 36px slider height) */
+#focusRange::-webkit-slider-runnable-track { height: 2px; }
+#focusRange::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -7px; }
+#focusRange::-moz-range-track { height: 2px; }
+#focusRange::-moz-range-progress { height: 2px; }
+#focusRange::-moz-range-thumb { width: 16px; height: 16px; }
 </style>
 </head>
 <body>
@@ -3568,17 +3588,36 @@ window.COURSE_ORDER = ['byrne', 'parma'];
     mark();
   })();
 
-  // ---------- auto focus (cinema): while a lesson plays, only the board and the size slider stay on screen
+  // ---------- auto focus (cinema): while a lesson plays, only the board stays on screen
+  // On entering focus the size slider shows for a few seconds, then fades. A tap on the screen opens the
+  // script view (white page, narration and controls); another tap on the screen (not on a control) returns to focus.
   (function () {
-    var root = document.documentElement, bar = $('#focusBar'), range = $('#focusRange');
-    var peeking = false, peekTimer = 0, swallowUntil = 0;
+    var root = document.documentElement, bar = $('#focusBar'), range = $('#focusRange'), box = $('#boardbox');
+    var scriptView = false, idleTimer = 0, swallowUntil = 0, dragging = false, IDLE_MS = 3000;
     var themeMeta = document.querySelector('meta[name="theme-color"]');
     function soundNoteOn() { var n = $('#soundNote'); return !!(n && n.classList.contains('on')); }
-    function want() { return !!(S.started && S.playing && !peeking && !soundNoteOn()); }
+    function want() { return !!(S.started && S.playing && !scriptView && !soundNoteOn()); }
+    function showBar() {
+      root.classList.remove('fz-idle'); clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () { if (!dragging) root.classList.add('fz-idle'); }, IDLE_MS);
+    }
+    // in focus the board glides to the true centre of the screen; nothing is resized
+    function centre() {
+      if (!box) return;
+      if (!root.classList.contains('focus')) { box.style.setProperty('--fy', '0px'); return; }
+      var cs = getComputedStyle(box), pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0;
+      var app = $('#app').getBoundingClientRect();
+      var mid = app.top + box.offsetTop + pt + (box.clientHeight - pt - pb) / 2;
+      var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      box.style.setProperty('--fy', Math.round(vh / 2 - mid) + 'px');
+    }
     function apply() {
-      var on = want();
-      if (on && !root.classList.contains('focus') && closeSizePop) closeSizePop();
+      var on = want(), was = root.classList.contains('focus');
+      if (on && !was && closeSizePop) closeSizePop();
       root.classList.toggle('focus', on);
+      if (on && !was) showBar();
+      if (!on) { clearTimeout(idleTimer); root.classList.remove('fz-idle'); dragging = false; }
+      centre();
       if (themeMeta) themeMeta.setAttribute('content', on ? '#0b0c0e' : '#ffffff');
     }
     function syncRange() {
@@ -3588,33 +3627,33 @@ window.COURSE_ORDER = ['byrne', 'parma'];
       range.style.setProperty('--p', ((pct - range.min) / (range.max - range.min) * 100) + '%');
       range.setAttribute('aria-valuetext', pct + '%');
     }
-    function armRefocus() {
-      clearTimeout(peekTimer);
-      peekTimer = setTimeout(function () {
-        var pop = $('#sizePop');
-        if (pop && !pop.hidden) { armRefocus(); return; }
-        peeking = false; apply();
-      }, 4000);
+    function isControl(t) {
+      return !!(t && t.closest && t.closest('button, a, input, select, textarea, label, [role="menu"], .brand, .tools, .transport, .drawer, .gate, .soundnote, .quizbox'));
     }
-    function peek() { peeking = true; apply(); armRefocus(); }
-    syncFocus = function () { if (!S.playing) { peeking = false; clearTimeout(peekTimer); } apply(); };
+    syncFocus = function () { if (!S.playing) scriptView = false; apply(); };
     sizeUIHooks.push(syncRange);
     if (range) {
-      range.addEventListener('input', function () { setBoardScale(+range.value / 100, false); });
+      range.addEventListener('input', function () { setBoardScale(+range.value / 100, false); if (root.classList.contains('focus') && !dragging) showBar(); });
       range.addEventListener('change', function () { setBoardScale(+range.value / 100, true); });
     }
-    // a tap anywhere but the slider brings the controls back for a few seconds; that same tap presses nothing
     document.addEventListener('pointerdown', function (e) {
+      if (!S.started) return;
       if (root.classList.contains('focus')) {
-        if (bar && bar.contains(e.target)) return;
-        swallowUntil = Date.now() + 700; peek(); return;
+        if (bar && bar.contains(e.target) && !root.classList.contains('fz-idle')) { dragging = true; clearTimeout(idleTimer); return; }
+        scriptView = true; swallowUntil = Date.now() + 700; apply(); return;
       }
-      if (peeking) armRefocus();
+      if (S.playing && scriptView && !isControl(e.target)) { scriptView = false; swallowUntil = Date.now() + 700; apply(); }
     }, true);
+    function release() { if (dragging) { dragging = false; if (root.classList.contains('focus')) showBar(); } }
+    document.addEventListener('pointerup', release, true);
+    document.addEventListener('pointercancel', release, true);
+    // the tap that switches views presses nothing underneath it
     document.addEventListener('click', function (e) {
       if (Date.now() < swallowUntil && !(bar && bar.contains(e.target))) { e.preventDefault(); e.stopPropagation(); swallowUntil = 0; }
     }, true);
-    document.addEventListener('keydown', function () { if (peeking) armRefocus(); }, true);
+    window.addEventListener('resize', centre);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', centre);
+    window.__pircFocus = { centre: centre, showBar: showBar, state: function () { return { focus: root.classList.contains('focus'), idle: root.classList.contains('fz-idle'), scriptView: scriptView }; } };
     syncRange(); apply();
   })();
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { $('#btnFull').setAttribute('aria-pressed', String(isFull())); setTimeout(sizeBoard, 60); }); });
