@@ -2394,8 +2394,9 @@ window.COURSE_ORDER = ['byrne', 'parma'];
     var cs = getComputedStyle(box);
     w -= (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
     h -= (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    var s = Math.min(w, h, 900);
-    s = Math.max(240, Math.floor(s));
+    // the board takes three quarters of the space it could fill (about half the area): calmer on the eyes
+    var s = Math.min(w, h, 900) * 0.75;
+    s = Math.max(220, Math.floor(s));
     document.documentElement.style.setProperty('--bs', s + 'px');
   }
   new ResizeObserver(sizeBoard).observe($('#boardbox'));
@@ -3573,6 +3574,6 @@ window.COURSE_ORDER = ['byrne', 'parma'];
   window.__menu = { start: start };
 })();
 </script>
-<script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
+<script>if ('serviceWorker' in navigator) { var hadSW = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { var g = document.getElementById('gate'); if (hadSW && !reloaded && g && !g.classList.contains('off')) { reloaded = true; location.reload(); } }); window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); }); }</script>
 </body>
 </html>
