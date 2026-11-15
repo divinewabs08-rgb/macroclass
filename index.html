@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Narrated chess opening lessons: the Pirc, move by move.">
 <meta name="theme-color" content="#ffffff">
+<meta name="description" content="Narrated chess opening lessons: the Pirc, move by move.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -525,12 +525,45 @@ html, body { overflow-x: hidden; }
 .sizepop .sp-i.on b { font-weight: 800; }
 @media (min-width: 700px) { .tools #btnSize { width: 42px; height: 42px; } .tools { gap: 10px; } }
 header.top { position: relative; z-index: 30; }
+
+/* ---------- auto focus · cinema ---------- */
+.cinema { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease;
+  background: radial-gradient(80% 55% at 50% 45%, #24272c 0%, #0c0d0f 60%, #050506 100%); }
+#app { position: relative; z-index: 1; }
+header.top, #coachCard, .transport { transition: opacity .4s ease, visibility 0s linear 0s; }
+html.focus .cinema { opacity: 1; }
+html.focus header.top, html.focus #coachCard, html.focus .transport { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .4s ease, visibility 0s linear .4s; }
+#boardbox::after { transition: opacity .4s ease; }
+html.focus #boardbox::after { opacity: 0; }
+.focusbar { position: fixed; left: 50%; bottom: calc(30px + env(safe-area-inset-bottom)); z-index: 60; display: flex; align-items: center; gap: 14px;
+  transform: translate(-50%, 10px); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .3s ease, transform .3s ease, visibility 0s linear .3s; }
+html.focus .focusbar { transform: translate(-50%, 0); opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .45s ease .2s, transform .45s ease .2s, visibility 0s; }
+.focusbar .fz-ico { flex: none; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border-radius: 2px; box-shadow: inset 0 0 0 1.4px rgba(255,255,255,.8); }
+.focusbar .fz-ico i { background: rgba(255,255,255,.8); } .focusbar .fz-ico i:nth-child(2), .focusbar .fz-ico i:nth-child(3) { background: transparent; }
+.focusbar .fz-ico.sm { width: 11px; height: 11px; } .focusbar .fz-ico.lg { width: 19px; height: 19px; }
+#focusRange { -webkit-appearance: none; appearance: none; width: min(220px, 56vw); height: 36px; margin: 0; background: transparent; cursor: pointer; touch-action: none; --p: 100%; }
+#focusRange:focus { outline: none; }
+#focusRange::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, #fff 0 var(--p), rgba(255,255,255,.18) var(--p) 100%); }
+#focusRange::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; margin-top: -10px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 7px rgba(255,255,255,.09), 0 4px 12px rgba(0,0,0,.4); }
+#focusRange::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.18); }
+#focusRange::-moz-range-progress { height: 4px; border-radius: 4px; background: #fff; }
+#focusRange::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 7px rgba(255,255,255,.09); }
+#focusRange:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 7px rgba(255,255,255,.22); }
+@media (min-width: 700px) { .focusbar { bottom: calc(40px + env(safe-area-inset-bottom)); gap: 16px; } #focusRange { width: 320px; } }
+@media (prefers-reduced-motion: reduce) { .cinema, .focusbar, header.top, #coachCard, .transport { transition: none !important; } }
 </style>
 </head>
 <body>
 <div class="backdrop"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="pieceDefs"></defs></svg>
 
+<div class="cinema" aria-hidden="true"></div>
+<div class="focusbar" id="focusBar" role="group" aria-label="Board size">
+  <span class="fz-ico sm" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+  <input type="range" id="focusRange" min="50" max="100" step="1" value="100" aria-label="Board size">
+  <span class="fz-ico lg" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+</div>
 <div id="app">
   <header class="top">
     <div class="brand">
@@ -2419,10 +2452,23 @@ window.COURSE_ORDER = ['byrne', 'parma'];
     { k: 'medium', label: 'Medium', note: '75%', s: 0.75 },
     { k: 'small', label: 'Small', note: '62%', s: 0.62 }
   ];
-  var SIZE_KEY = 'pircMacroclass.boardSize';
-  var boardSizeK = 'full';
-  try { var sk = localStorage.getItem(SIZE_KEY); if (BOARD_SIZES.some(function (z) { return z.k === sk; })) boardSizeK = sk; } catch (e) { /* storage unavailable: keep Full */ }
-  function boardScale() { for (var i = 0; i < BOARD_SIZES.length; i++) if (BOARD_SIZES[i].k === boardSizeK) return BOARD_SIZES[i].s; return 1; }
+  var SIZE_KEY = 'pircMacroclass.boardSize', SCALE_KEY = 'pircMacroclass.boardScale';
+  var SCALE_MIN = 0.5, SCALE_MAX = 1;
+  var boardScaleV = 1;
+  try {
+    var sv = parseFloat(localStorage.getItem(SCALE_KEY));
+    if (sv >= SCALE_MIN && sv <= SCALE_MAX) boardScaleV = sv;
+    else { var sk = localStorage.getItem(SIZE_KEY); BOARD_SIZES.forEach(function (z) { if (z.k === sk) boardScaleV = z.s; }); }
+  } catch (e) { /* storage unavailable: keep Full */ }
+  function boardScale() { return boardScaleV; }
+  var sizeUIHooks = [];
+  var syncFocus = function () {}, closeSizePop = null;
+  function setBoardScale(v, save) {
+    v = Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.round(v * 1000) / 1000));
+    boardScaleV = v; sizeBoard();
+    if (save) { try { localStorage.setItem(SCALE_KEY, String(v)); } catch (e) { /* not saved: still applies now */ } }
+    sizeUIHooks.forEach(function (f) { f(); });
+  }
   function sizeBoard() {
     var box = $('#boardbox'); var w = box.clientWidth; var h = box.clientHeight;
     var cs = getComputedStyle(box);
@@ -3132,7 +3178,7 @@ window.COURSE_ORDER = ['byrne', 'parma'];
     return urlCache[id];
   }
   function cancelSpeech() { try { player.pause(); } catch (e) { /* ignore */ } }
-  function showSoundNote(on) { $('#soundNote').classList.toggle('on', !!on); }
+  function showSoundNote(on) { $('#soundNote').classList.toggle('on', !!on); syncFocus(); }
   function voiceInfo(t) { $('#voiceInfo').textContent = t; }
   var SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
   function warmUp() {            // inside the Begin tap: lets the browser play audio for the rest of the session
@@ -3471,6 +3517,7 @@ window.COURSE_ORDER = ['byrne', 'parma'];
   function setPlayIcon() {
     $('#playIcon').innerHTML = S.playing ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
     $('#btnPlay').setAttribute('aria-label', S.playing ? 'Pause' : 'Play');
+    syncFocus();
   }
 
 
@@ -3496,13 +3543,14 @@ window.COURSE_ORDER = ['byrne', 'parma'];
         '<svg class="sp-ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>';
     }).join('');
     var items = [].slice.call(pop.querySelectorAll('.sp-i'));
-    function mark() { items.forEach(function (it) { var on = it.getAttribute('data-k') === boardSizeK; it.setAttribute('aria-checked', String(on)); it.classList.toggle('on', on); }); }
+    function mark() { items.forEach(function (it) { var z = BOARD_SIZES.filter(function (q) { return q.k === it.getAttribute('data-k'); })[0]; var on = !!z && Math.abs(z.s - boardScaleV) < 0.006; it.setAttribute('aria-checked', String(on)); it.classList.toggle('on', on); }); }
+    sizeUIHooks.push(mark);
     function isOpen() { return !pop.hidden; }
     function open() { mark(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); var cur = pop.querySelector('.sp-i.on') || items[0]; try { cur.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
     function close(refocus) { if (!isOpen()) return; pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (refocus) { try { btn.focus({ preventScroll: true }); } catch (e) { /* ignore */ } } else { try { btn.blur(); } catch (e) { /* ignore */ } } }
     function choose(k) {
-      boardSizeK = k; try { localStorage.setItem(SIZE_KEY, k); } catch (e) { /* not saved: still applies now */ }
-      mark(); sizeBoard(); requestAnimationFrame(sizeBoard); close(false);
+      var z = BOARD_SIZES.filter(function (q) { return q.k === k; })[0]; if (!z) return;
+      setBoardScale(z.s, true); requestAnimationFrame(sizeBoard); close(false);
     }
     btn.addEventListener('click', function (e) { e.stopPropagation(); if (isOpen()) close(false); else open(); });
     pop.addEventListener('click', function (e) { e.stopPropagation(); var it = e.target.closest('.sp-i'); if (it) choose(it.getAttribute('data-k')); });
@@ -3516,7 +3564,58 @@ window.COURSE_ORDER = ['byrne', 'parma'];
     });
     document.addEventListener('pointerdown', function (e) { if (isOpen() && !pop.contains(e.target) && !btn.contains(e.target)) close(false); }, true);
     window.addEventListener('resize', function () { close(false); });
+    closeSizePop = function () { close(false); };
     mark();
+  })();
+
+  // ---------- auto focus (cinema): while a lesson plays, only the board and the size slider stay on screen
+  (function () {
+    var root = document.documentElement, bar = $('#focusBar'), range = $('#focusRange');
+    var peeking = false, peekTimer = 0, swallowUntil = 0;
+    var themeMeta = document.querySelector('meta[name="theme-color"]');
+    function soundNoteOn() { var n = $('#soundNote'); return !!(n && n.classList.contains('on')); }
+    function want() { return !!(S.started && S.playing && !peeking && !soundNoteOn()); }
+    function apply() {
+      var on = want();
+      if (on && !root.classList.contains('focus') && closeSizePop) closeSizePop();
+      root.classList.toggle('focus', on);
+      if (themeMeta) themeMeta.setAttribute('content', on ? '#0b0c0e' : '#ffffff');
+    }
+    function syncRange() {
+      if (!range) return;
+      var pct = Math.round(boardScaleV * 100);
+      if (+range.value !== pct) range.value = pct;
+      range.style.setProperty('--p', ((pct - range.min) / (range.max - range.min) * 100) + '%');
+      range.setAttribute('aria-valuetext', pct + '%');
+    }
+    function armRefocus() {
+      clearTimeout(peekTimer);
+      peekTimer = setTimeout(function () {
+        var pop = $('#sizePop');
+        if (pop && !pop.hidden) { armRefocus(); return; }
+        peeking = false; apply();
+      }, 4000);
+    }
+    function peek() { peeking = true; apply(); armRefocus(); }
+    syncFocus = function () { if (!S.playing) { peeking = false; clearTimeout(peekTimer); } apply(); };
+    sizeUIHooks.push(syncRange);
+    if (range) {
+      range.addEventListener('input', function () { setBoardScale(+range.value / 100, false); });
+      range.addEventListener('change', function () { setBoardScale(+range.value / 100, true); });
+    }
+    // a tap anywhere but the slider brings the controls back for a few seconds; that same tap presses nothing
+    document.addEventListener('pointerdown', function (e) {
+      if (root.classList.contains('focus')) {
+        if (bar && bar.contains(e.target)) return;
+        swallowUntil = Date.now() + 700; peek(); return;
+      }
+      if (peeking) armRefocus();
+    }, true);
+    document.addEventListener('click', function (e) {
+      if (Date.now() < swallowUntil && !(bar && bar.contains(e.target))) { e.preventDefault(); e.stopPropagation(); swallowUntil = 0; }
+    }, true);
+    document.addEventListener('keydown', function () { if (peeking) armRefocus(); }, true);
+    syncRange(); apply();
   })();
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { $('#btnFull').setAttribute('aria-pressed', String(isFull())); setTimeout(sizeBoard, 60); }); });
   // ---------- start gate
