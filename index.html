@@ -504,6 +504,27 @@ header.top { grid-area: head; border: 0; background: rgba(255,255,255,.85); back
 :root { --bs: min(560px, 92vw, 60vh); }
 html, body { overflow-x: hidden; }
 #boardbox::after { top: calc(50% - 2px + var(--bs) * .5 - 16px); bottom: auto; }
+
+/* board size control */
+.tools { position: relative; display: flex; align-items: center; gap: 8px; }
+.tools #btnSize { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; background: #fff; border: 1px solid #e3e5e9; color: var(--mc-ink); box-shadow: 0 2px 10px rgba(15,20,30,.06); }
+.tools #btnSize .lbl { display: none !important; }
+.tools #btnSize svg { width: 17px; height: 17px; }
+.tools #btnSize[aria-expanded="true"] { background: var(--mc-ink); color: #fff; border-color: var(--mc-ink); }
+.sizepop { position: absolute; top: calc(100% + 10px); right: 0; z-index: 80; width: 214px; padding: 8px; border-radius: 16px; background: #fff; border: 1px solid #eceef1;
+  box-shadow: 0 18px 44px rgba(15,20,30,.16), 0 2px 8px rgba(15,20,30,.06); font-family: var(--mc-ui); color: var(--mc-ink); }
+.sizepop[hidden] { display: none; }
+.sizepop .sp-h { padding: 6px 10px 8px; font-size: 10px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--mc-sub); }
+.sizepop .sp-i { width: 100%; display: grid; grid-template-columns: 28px 1fr 18px; align-items: center; gap: 10px; min-height: 46px; padding: 6px 10px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; text-align: left; color: var(--mc-ink); -webkit-tap-highlight-color: transparent; }
+.sizepop .sp-i:hover, .sizepop .sp-i:focus-visible { background: var(--mc-soft); outline: none; }
+.sizepop .sp-sq { justify-self: center; border-radius: 3px; background: linear-gradient(135deg, #8a9a7b 0 50%, #eef0e8 50% 100%); box-shadow: inset 0 0 0 1.5px #1f2a22; }
+.sizepop .sp-t b { display: block; font-size: 14px; font-weight: 600; }
+.sizepop .sp-t small { display: block; font-size: 11px; color: var(--mc-sub); }
+.sizepop .sp-ck { width: 16px; height: 16px; opacity: 0; color: var(--mc-ink); }
+.sizepop .sp-i.on .sp-ck { opacity: 1; }
+.sizepop .sp-i.on b { font-weight: 800; }
+@media (min-width: 700px) { .tools #btnSize { width: 42px; height: 42px; } .tools { gap: 10px; } }
+header.top { position: relative; z-index: 30; }
 </style>
 </head>
 <body>
@@ -522,6 +543,8 @@ html, body { overflow-x: hidden; }
       <button class="tbtn" id="btnChapters" aria-expanded="false" aria-controls="drawerChapters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="lbl">Chapters</span></button>
       <button class="tbtn" id="btnMap" aria-pressed="false" title="Show who controls each square"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="lbl">Control map</span></button>
       <button class="tbtn" id="btnFlip" title="Flip the board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg><span class="lbl">Flip</span></button>
+      <button class="tbtn" id="btnSize" title="Board size" aria-label="Board size" aria-haspopup="menu" aria-expanded="false" aria-controls="sizePop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 12h17M12 3.5v17"/><path d="M12 12h8.5v8.5H12zM3.5 3.5H12V12H3.5z" fill="currentColor" stroke="none" opacity=".9"/></svg><span class="lbl">Size</span></button>
+      <div class="sizepop" id="sizePop" role="menu" aria-label="Board size" hidden></div>
       <button class="tbtn" id="btnFull" title="Full screen (Enter or exit)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Full screen</span></button>
       <button class="tbtn" id="btnSettings" aria-expanded="false" aria-controls="drawerSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="lbl">Voice &amp; speed</span></button>
     </div>
@@ -2389,14 +2412,25 @@ window.COURSE_ORDER = ['byrne', 'parma'];
   function place(el, sq) { var p = rc(sq); el.style.left = (p.x * 12.5) + '%'; el.style.top = (p.y * 12.5) + '%'; }
   function S2I(n) { return Chess.sq(n); }
 
+  // board size: Full is the default; the choice is kept in this browser for every lesson
+  var BOARD_SIZES = [
+    { k: 'full', label: 'Full', note: 'Fills the screen', s: 1 },
+    { k: 'large', label: 'Large', note: '88%', s: 0.88 },
+    { k: 'medium', label: 'Medium', note: '75%', s: 0.75 },
+    { k: 'small', label: 'Small', note: '62%', s: 0.62 }
+  ];
+  var SIZE_KEY = 'pircMacroclass.boardSize';
+  var boardSizeK = 'full';
+  try { var sk = localStorage.getItem(SIZE_KEY); if (BOARD_SIZES.some(function (z) { return z.k === sk; })) boardSizeK = sk; } catch (e) { /* storage unavailable: keep Full */ }
+  function boardScale() { for (var i = 0; i < BOARD_SIZES.length; i++) if (BOARD_SIZES[i].k === boardSizeK) return BOARD_SIZES[i].s; return 1; }
   function sizeBoard() {
     var box = $('#boardbox'); var w = box.clientWidth; var h = box.clientHeight;
     var cs = getComputedStyle(box);
     w -= (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
     h -= (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    // the board takes three quarters of the space it could fill (about half the area): calmer on the eyes
-    var s = Math.min(w, h, 900) * 0.75;
-    s = Math.max(220, Math.floor(s));
+    // the board fills the space it is given, times the size the reader picked (Full by default)
+    var s = Math.min(w, h, 900) * boardScale();
+    s = Math.max(200, Math.floor(s));
     document.documentElement.style.setProperty('--bs', s + 'px');
   }
   new ResizeObserver(sizeBoard).observe($('#boardbox'));
@@ -3452,6 +3486,38 @@ window.COURSE_ORDER = ['byrne', 'parma'];
     else goFull();
   }
   $('#btnFull').addEventListener('click', toggleFull);
+  (function () {
+    var btn = $('#btnSize'), pop = $('#sizePop');
+    if (!btn || !pop) return;
+    pop.innerHTML = '<div class="sp-h">Board size</div>' + BOARD_SIZES.map(function (z) {
+      var px = Math.round(14 + 10 * z.s);
+      return '<button type="button" class="sp-i" role="menuitemradio" data-k="' + z.k + '" aria-checked="false">' +
+        '<i class="sp-sq" style="width:' + px + 'px;height:' + px + 'px"></i><span class="sp-t"><b>' + z.label + '</b><small>' + z.note + '</small></span>' +
+        '<svg class="sp-ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>';
+    }).join('');
+    var items = [].slice.call(pop.querySelectorAll('.sp-i'));
+    function mark() { items.forEach(function (it) { var on = it.getAttribute('data-k') === boardSizeK; it.setAttribute('aria-checked', String(on)); it.classList.toggle('on', on); }); }
+    function isOpen() { return !pop.hidden; }
+    function open() { mark(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); var cur = pop.querySelector('.sp-i.on') || items[0]; try { cur.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+    function close(refocus) { if (!isOpen()) return; pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (refocus) { try { btn.focus({ preventScroll: true }); } catch (e) { /* ignore */ } } else { try { btn.blur(); } catch (e) { /* ignore */ } } }
+    function choose(k) {
+      boardSizeK = k; try { localStorage.setItem(SIZE_KEY, k); } catch (e) { /* not saved: still applies now */ }
+      mark(); sizeBoard(); requestAnimationFrame(sizeBoard); close(false);
+    }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); if (isOpen()) close(false); else open(); });
+    pop.addEventListener('click', function (e) { e.stopPropagation(); var it = e.target.closest('.sp-i'); if (it) choose(it.getAttribute('data-k')); });
+    pop.addEventListener('keydown', function (e) {
+      var i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1 + items.length) % items.length].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      else if (e.key === 'Escape') { e.preventDefault(); close(true); }
+      else if (e.key === 'Tab') { close(false); return; }
+      e.stopPropagation();
+    });
+    document.addEventListener('pointerdown', function (e) { if (isOpen() && !pop.contains(e.target) && !btn.contains(e.target)) close(false); }, true);
+    window.addEventListener('resize', function () { close(false); });
+    mark();
+  })();
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { $('#btnFull').setAttribute('aria-pressed', String(isFull())); setTimeout(sizeBoard, 60); }); });
   // ---------- start gate
   function begin() {
