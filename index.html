@@ -4423,13 +4423,14 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     S.started = true; S.playing = true; setPlayIcon();
     $('#gate').classList.add('off');
     runStep(S.ci, S.si, { title: true });
-    try { if (localStorage.getItem(V3.KEY) === '1') set3D(true); } catch (e) { /* ignore */ }
+    try { if (V3.enabled && localStorage.getItem(V3.KEY) === '1') set3D(true); } catch (e) { /* ignore */ }
   }
   // back to the lesson menu: a fresh page load, so nothing from this lesson keeps running
   $('#btnMenu').addEventListener('click', function () { cancelSpeech(); persist(); try { location.reload(); } catch (e) { location.href = location.href; } });
 
   // ---------- 3D studio view (a separate file, loaded the first time it is switched on)
-  var V3 = { on: false, loading: false, KEY: 'pirc.view3d' };
+  var V3 = { enabled: false, on: false, loading: false, KEY: 'pirc.view3d' };   // the public build switches this off
+  if (!V3.enabled) ['#btn3d', '#fz3d'].forEach(function (id) { var b = $(id); if (b) b.remove(); });
   function v3api() {
     return {
       pieceEls: function () { return Array.prototype.slice.call(piecesEl.children).concat(Array.prototype.slice.call(ghostsEl.querySelectorAll('.pc.shade'))); },
@@ -4446,6 +4447,7 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     ['#btn3d', '#fz3d'].forEach(function (id) { var b = $(id); if (!b) return; b.setAttribute('aria-pressed', String(V3.on)); b.classList.toggle('busy', V3.loading); b.title = V3.on ? 'Back to the flat board' : 'Switch to the 3D studio'; });
   }
   function set3D(on) {
+    if (!V3.enabled) return;
     if (on && !window.View3D) {
       if (V3.loading) return;
       V3.loading = true; set3dButtons();
