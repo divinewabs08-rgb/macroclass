@@ -1,14 +1,14 @@
 {
-  "name": "Pirc Macroclass",
-  "short_name": "Macroclass",
+  "name": "Kyros",
+  "short_name": "Kyros",
   "id": "./",
-  "description": "Narrated chess opening lessons: the Pirc, move by move.",
+  "description": "Kyros: narrated chess opening lessons, move by move.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "icons/icon-192.png",

@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<meta name="description" content="Narrated chess opening lessons: the Pirc, move by move.">
+<meta name="description" content="Kyros: narrated chess opening lessons, move by move.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Macroclass">
+<meta name="apple-mobile-web-app-title" content="Kyros">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
-<title>Pirc Macroclass</title>
+<title>Kyros</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>/* Layout idea: a lit pearl-and-jade board in a dark green lacquer frame on a studio floor, with a glass HUD of coach, plans and notation beside it. */
 :root {
@@ -655,8 +655,14 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
 .gate.cine.off { opacity: 0; pointer-events: none; }
 .cine-stage { position: absolute; inset: 0; overflow: hidden; background: #000; }
 .cine-still, .cine-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; transform-origin: 50% 50%;
-  transform: var(--t-intro, scale(1.12)); transition: transform 2.8s cubic-bezier(.2,.7,.2,1), filter 2.8s ease, opacity .4s ease; }
-.gate.cine.portrait .cine-still, .gate.cine.portrait .cine-video { -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+  transform: var(--t-intro, scale(1.12)); transition: transform 2.8s cubic-bezier(.2,.7,.2,1), filter 2.8s ease, opacity .9s ease; }
+.gate.cine.boxed .cine-still, .gate.cine.boxed .cine-video { -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+/* the glow around a letterboxed picture: a 64-pixel copy of the film, blown up and blurred */
+.cine-amb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform-origin: 50% 50%; opacity: 0;
+  transform: var(--t-intro, none) scale(1.22); filter: blur(34px) saturate(1.3) brightness(.55);
+  transition: transform 2.8s cubic-bezier(.2,.7,.2,1), opacity 1.2s ease; }
+.gate.settled .cine-amb { transform: var(--t-settle, none) scale(1.22); }
+.gate.cine.boxed .cine-amb { opacity: 1; }
 .cine-still { opacity: 0; }
 .gate.still-on .cine-still { opacity: 1; }
 .gate.still-on:not(.playing) .cine-video { opacity: 0; }
@@ -771,6 +777,11 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
   .cine-still, .cine-video { transition: none; }
   .gate.cine[data-phase="pick"] .course, .gate.cine[data-phase="pick"] .pk-top, .gate.cine[data-phase="pick"] .pk-panel > *, .ce-btn { animation: none; opacity: 1; }
 }
+
+/* the Kyros pawn: a picture, so it fills its tile */
+.gate.cine .mclogo { overflow: hidden; }
+.gate.cine .mclogo img.kyros, .brand .logo.kyros img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; filter: none; }
+.brand .logo.kyros { overflow: hidden; background: #0b0a0a; }
 </style>
 </head>
 <body>
@@ -788,7 +799,7 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
   <header class="top">
     <div class="brand">
       <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#wN"/></svg>
-      <div><b>Pirc Macroclass</b><br><small>Classical · 6…Bg4 · narrated</small></div>
+      <div><b>Kyros</b><br><small>Classical · 6…Bg4 · narrated</small></div>
     </div>
     <div class="chapline"><span class="k" id="hdrK">Chapter 1 of 6</span><span class="t" id="hdrT">The Pirc Setup</span></div>
     <div class="tools">
@@ -850,10 +861,10 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
       <div class="card coachcard" id="coachCard">
         <div class="coach">
           <div class="orb" aria-hidden="true"><div class="wave"><i></i><i></i><i></i><i></i><i></i></div></div>
-          <div><h3>Orbit <span>· Pirc coach</span></h3><div class="status"><i></i><span id="statusTxt">Ready</span></div></div>
+          <div><h3>Kyros <span>· Pirc coach</span></h3><div class="status"><i></i><span id="statusTxt">Ready</span></div></div>
         </div>
         <div class="caption" id="caption" aria-live="polite"></div>
-        <div class="soundnote" id="soundNote" role="status"><b>Can't hear Orbit?</b> Turn the volume up, then <button class="linkbtn" data-testvoice>tap here to test the voice</button>. Captions keep running meanwhile.</div>
+        <div class="soundnote" id="soundNote" role="status"><b>Can't hear Kyros?</b> Turn the volume up, then <button class="linkbtn" data-testvoice>tap here to test the voice</button>. Captions keep running meanwhile.</div>
         <div class="quizbox" id="quizbox">
           <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4"/><circle id="quizRing" cx="24" cy="24" r="20" fill="none" stroke="#f1cf8b" stroke-width="4" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="0"/></svg>
           <div><b>Your move. Say it out loud.</b><small>The answer appears in a moment.</small></div>
@@ -900,23 +911,24 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
 
 <div class="gate menu cine" id="gate" data-phase="boot">
   <div class="cine-stage" aria-hidden="true">
+    <canvas class="cine-amb" id="cineAmb" width="64" height="36"></canvas>
     <img class="cine-still" id="cineStill" alt="" decoding="async">
     <video class="cine-video" id="cineVideo" playsinline webkit-playsinline preload="auto"></video>
     <div class="cine-shade"></div>
   </div>
   <div class="cine-enter" id="cineEnter">
-    <div class="ce-mark"><span class="mclogo"><img alt=""></span><span class="ce-word">Macroclass</span></div>
+    <div class="ce-mark"><span class="mclogo"><img alt=""></span><span class="ce-word">Kyros</span></div>
     <button class="ce-btn" id="cineGo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Enter</span></button>
     <div class="ce-sub">Sound on</div>
   </div>
   <button class="cine-skip" id="cineSkip" type="button">Skip intro<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 6 6-6 6M13 6l6 6-6 6"/></svg></button>
   <div class="pick" id="cinePick">
-    <div class="pk-top"><span class="mclogo" aria-hidden="true"><img alt=""></span><span class="pk-word">Macroclass</span></div>
+    <div class="pk-top"><span class="mclogo" aria-hidden="true"><img alt=""></span><span class="pk-word">Kyros</span></div>
     <div class="pk-panel">
       <div class="eyebrow">The opening series</div>
       <h1>Choose your lesson</h1>
       <div class="courses" id="courses"></div>
-      <div class="resume pk-foot"><span>Turn your sound on. The lesson opens full screen and plays by itself.</span> <button class="linkbtn" id="cineReplay" type="button">Replay intro</button></div>
+      <div class="resume pk-foot"><span>Turn your sound on. The lesson plays by itself.</span> <button class="linkbtn" id="cineReplay" type="button">Replay intro</button></div>
       <div class="resume" id="menuInfo" role="status"></div>
     </div>
   </div>
@@ -3247,21 +3259,21 @@ if (typeof module !== 'undefined') module.exports = { LESSONS_SMITH: LESSONS_SMI
 window.COURSES = {
   smith: {
     lessons: typeof LESSONS_SMITH !== 'undefined' ? LESSONS_SMITH : [], narr: window.NARR_SM, files: window.NARR_FILES_SM,
-    key: 'macroclass.smith.v1', tag: 'White gives a pawn for a fast, open attack on the Sicilian. Seven systems, every trap.', brand: 'Smith-Morra Macroclass', coach: 'Morra coach', name: 'Smith-Morra Gambit', sub: 'Smith-Morra Gambit · 3.c3 · narrated',
+    key: 'macroclass.smith.v1', tag: 'White gives a pawn for a fast, open attack on the Sicilian. Seven systems, every trap.', brand: 'Kyros', coach: 'Morra coach', name: 'Smith-Morra Gambit', sub: 'Smith-Morra Gambit · 3.c3 · narrated',
     eyebrow: '1.e4 c5 2.d4 cxd4 3.c3 · for White, then Black', title: 'The Smith-Morra Gambit',
     blurb: 'Seven systems for Black, one at a time: the classical main line to move 15, every other defence and trap, the main line to move 22, the checklist, four full games including Nakamura vs Caruana, Black’s side, the drill, and fifteen common mistakes.',
     facts: ['Seven systems', 'Every trap', 'Van Wely · Anand · Gukesh · Nakamura', 'Black’s side', 'Key moments drill', '15 common mistakes']
   },
   byrne: {
     lessons: typeof LESSONS_BYRNE !== 'undefined' ? LESSONS_BYRNE : [], narr: window.NARR_BY, files: window.NARR_FILES_BY,
-    key: 'pircMasterclass.byrne.v4', tag: 'Black against 4.Bg5 in the Pirc: eleven variations and three weapons, then White’s side.', brand: 'Pirc Macroclass', name: 'Byrne Variation', sub: 'Byrne Variation · 4.Bg5 · narrated',
+    key: 'pircMasterclass.byrne.v4', tag: 'Black against 4.Bg5 in the Pirc: eleven variations and three weapons, then White’s side.', brand: 'Kyros', name: 'Byrne Variation', sub: 'Byrne Variation · 4.Bg5 · narrated',
     eyebrow: '4.Bg5 · for Black, then White', title: 'The Byrne Variation',
     blurb: 'Eleven variations and Black’s three weapons, one at a time: the main line’s key moment, every sideline, two classical games, the main line to move 20, the recap, then two full games.',
     facts: ['Eleven variations', 'The race · the hunt · the strike', 'Four model games', 'White’s side', 'Key moments drill']
   },
   parma: {
     lessons: LESSONS, narr: window.NARR, files: window.NARR_FILES,
-    key: 'pircMasterclass.v1', tag: 'The Parma Defence against the Classical Pirc, with games by Karpov, Korchnoi and Ivanchuk.', brand: 'Pirc Macroclass', name: 'The Pirc, 6…Bg4', sub: 'Classical · 6…Bg4 · narrated',
+    key: 'pircMasterclass.v1', tag: 'The Parma Defence against the Classical Pirc, with games by Karpov, Korchnoi and Ivanchuk.', brand: 'Kyros', name: 'The Pirc, 6…Bg4', sub: 'Classical · 6…Bg4 · narrated',
     eyebrow: 'Classical · for Black, then White', title: 'The Pirc, 6…Bg4',
     blurb: 'The Parma Defence against the Classical, every branch, three world-class games, and 7.h3 and 5.h3 from White’s side.',
     facts: ['Karpov · Korchnoi · Ivanchuk', 'Rook endgame technique', 'White’s side', 'Memory drill']
@@ -3278,7 +3290,7 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
   var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.getElementById('pieceDefs').innerHTML = PIECES.defs();
   $('.brand b').textContent = COURSE.brand; $('.brand small').textContent = COURSE.sub; document.title = COURSE.brand + ' · ' + COURSE.name; if (COURSE.coach) { var cch = document.querySelector('h3 > span'); if (cch) cch.textContent = '· ' + COURSE.coach; }
-  (function () { var bs = document.querySelector('.brand svg'); if (bs && window.SPRITES && SPRITES.wN) { var lg = document.createElement('span'); lg.className = 'logo'; var im = document.createElement('img'); im.src = SPRITES.wN; im.alt = ''; lg.appendChild(im); bs.replaceWith(lg); } })();
+  (function () { var bs = document.querySelector('.brand svg'); if (bs) { var lg = document.createElement('span'); lg.className = 'logo kyros'; var im = document.createElement('img'); im.src = 'icons/logo-256.png'; im.alt = ''; lg.appendChild(im); bs.replaceWith(lg); } })();
   $('.brand').addEventListener('click', function () { var m = $('#btnMenu'); if (m) m.click(); });
   $('.brand').setAttribute('title', 'Back to the lesson menu');
 
@@ -4152,12 +4164,12 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     audioUrl('test').then(function (url) {
       player.src = url; try { player.defaultPlaybackRate = S.speed; player.playbackRate = S.speed; } catch (e) { /* ignore */ }
       var p = player.play();
-      if (p && p.then) p.then(function () { voiceInfo('Playing Orbit\'s voice now. If you hear nothing, raise the volume.'); showSoundNote(false); })
+      if (p && p.then) p.then(function () { voiceInfo('Playing Kyros\'s voice now. If you hear nothing, raise the volume.'); showSoundNote(false); })
         .catch(function (err) { voiceInfo('The browser blocked audio playback: ' + (err && err.name)); });
     }).catch(function () { voiceInfo('The narration audio could not be loaded. Reload the page and try again.'); });
   }
   document.querySelectorAll('[data-testvoice]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); testVoice(); }); });
-  voiceInfo('Orbit\'s voice is recorded audio that ships with this page.');
+  voiceInfo('Kyros\'s voice is recorded audio that ships with this page.');
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function setStatus(k) {
     var card = $('#coachCard'); card.classList.toggle('speaking', k === 'speaking'); card.classList.toggle('asking', k === 'asking');
@@ -4550,7 +4562,6 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { $('#btnFull').setAttribute('aria-pressed', String(isFull())); setTimeout(sizeBoard, 60); }); });
   // ---------- start gate
   function begin() {
-    goFull();
     try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { AC = null; }
     // unlock speech inside the tap itself with a real, audible phrase (iOS and Safari need this)
     warmUp(); loadPack(S.ci).catch(function () {});
@@ -4681,9 +4692,9 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
 
   // ---------- framing: the film is drawn whole (contain) and scaled from here, so every screen shape gets its own crop.
   // While it plays, an upright phone sees both eyes (a wider, letterboxed view); when the picker rises it pushes in to fill the screen.
-  var ASPECT = 1284 / 724;
+  var ASPECT = 1284 / 724, DETAIL = 1284;   // the film's real detail across, in pixels
   function frame() {
-    var vw = gate.clientWidth || window.innerWidth, vh = gate.clientHeight || window.innerHeight;
+    var vw = gate.clientWidth || window.innerWidth, vh = gate.clientHeight || window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 3);
     var cw, ch; if (vw / vh < ASPECT) { cw = vw; ch = vw / ASPECT; } else { ch = vh; cw = vh * ASPECT; }
     var cover = Math.max(vw / cw, vh / ch), upright = vw / vh < 1, narrow = vw <= 760 || (upright && vw <= 1100);
     function tf(k, fx, ty) {
@@ -4691,21 +4702,38 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
       tx = Math.max(-room, Math.min(room, tx));
       return 'translate(' + tx.toFixed(1) + 'px,' + (ty * vh).toFixed(1) + 'px) scale(' + k.toFixed(4) + ')';
     }
-    var kIntro = Math.min(cover, vw / (0.42 * cw));                    // never narrower than both eyes
-    var kSettle = cover * (narrow ? 1.05 : 1.06);
+    // quality first: never blow the film up past 1.6x its own pixels on this screen
+    // (a landscape screen may still fill edge to edge, which needs at most 1.3x)
+    var kCap = Math.max(1.6 * DETAIL / (cw * dpr), Math.min(cover, 1.3));
+    var kIntro = Math.min(cover, vw / (0.42 * cw), kCap);                // and never narrower than both eyes
+    var kSettle = Math.min(cover * (narrow ? 1.05 : 1.06), kCap);
+    var boxed = kIntro * ch < vh - 1 || kSettle * ch < vh - 1;
+    var band = kSettle * ch / vh, tySettle = kSettle * ch < vh - 1 ? 0.07 - 0.5 + band / 2 : (narrow ? -0.11 : -0.035);
     gate.style.setProperty('--t-intro', tf(kIntro, 0.5, 0));
-    gate.style.setProperty('--t-settle', tf(kSettle, narrow ? 0.54 : 0.5, narrow ? -0.11 : -0.035));
-    // a soft edge where the letterboxed film meets the black (its box is the whole screen; the picture is the middle band)
-    var top = (1 - ch / vh) / 2 * 100, band = ch / vh * 100, f = band * 0.05;
-    gate.style.setProperty('--fade', 'linear-gradient(180deg, transparent ' + top.toFixed(2) + '%, #000 ' + (top + f).toFixed(2) + '%, #000 ' + (top + band - f).toFixed(2) + '%, transparent ' + (top + band).toFixed(2) + '%)');
+    gate.style.setProperty('--t-settle', tf(kSettle, narrow ? 0.54 : 0.5, tySettle));
+    // a soft edge where a letterboxed picture meets the glow behind it (its box is the whole screen; the picture is the middle band)
+    var top = (1 - ch / vh) / 2 * 100, b = ch / vh * 100, f = b * 0.07;
+    gate.style.setProperty('--fade', 'linear-gradient(180deg, transparent ' + top.toFixed(2) + '%, #000 ' + (top + f).toFixed(2) + '%, #000 ' + (top + b - f).toFixed(2) + '%, transparent ' + (top + b).toFixed(2) + '%)');
+    gate.classList.toggle('boxed', boxed);
     gate.classList.toggle('portrait', upright);
   }
   frame();
   window.addEventListener('resize', frame);
   window.addEventListener('orientationchange', function () { setTimeout(frame, 120); });
 
-  // the knight tile beside the wordmark
-  Array.prototype.forEach.call(document.querySelectorAll('.gate .mclogo img'), function (im) { if (window.SPRITES && SPRITES.wN) im.src = SPRITES.wN; });
+  var amb = $('#cineAmb'), actx = null; try { actx = amb.getContext('2d', { alpha: false }); } catch (e) { /* no canvas */ }
+  function ambDraw(src) { if (actx) try { actx.drawImage(src, 0, 0, amb.width, amb.height); } catch (e) { /* not ready */ } }
+  var ambOn = false, ambLast = 0;
+  function ambLoop(ts) { if (!ambOn) return; if (ts - ambLast > 60 && vid.readyState >= 2) { ambLast = ts; ambDraw(vid); } requestAnimationFrame(ambLoop); }
+  vid.addEventListener('playing', function () { if (!ambOn) { ambOn = true; requestAnimationFrame(ambLoop); } });
+  ['pause', 'ended'].forEach(function (ev) { vid.addEventListener(ev, function () { ambOn = false; if (vid.readyState >= 2) ambDraw(vid); }); });
+  still.addEventListener('load', function () { if (gate.classList.contains('still-on') && !gate.classList.contains('playing')) ambDraw(still); });
+
+  // the Kyros pawn beside the wordmark; the browser bar goes black while the start page shows
+  Array.prototype.forEach.call(document.querySelectorAll('.gate .mclogo img'), function (im) { im.src = 'icons/logo-256.png'; im.className = 'kyros'; });
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function theme(c) { if (themeMeta) themeMeta.setAttribute('content', c); }
+  theme('#000000');
 
   // ---------- the three lesson cards
   var host = $('#courses');
@@ -4730,7 +4758,7 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     if (started) return; started = true;
     window.__mcIntroBusy = false; clearTimeout(watchdog);
     try { vid.pause(); vid.muted = true; } catch (e) { /* ignore */ }
-    markSeen();
+    markSeen(); theme('#ffffff');
     document.body.setAttribute('data-course', id);
     window.startCourse(id, { restart: !!restart });
     setTimeout(function () { try { vid.removeAttribute('src'); vid.load(); } catch (e) { /* ignore */ } }, 900);
@@ -4746,6 +4774,7 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
   function settle() {
     if (picked) return; picked = true; clearTimeout(watchdog);
     markSeen(); gate.classList.add('settled'); phase('pick');
+    if (!still.getAttribute('src')) still.src = STILL;
   }
   function fallback() { window.__mcIntroBusy = false; gate.classList.remove('playing'); useStill(); settle(); }
   function watch() {
@@ -4757,11 +4786,6 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     // a film that has not started after eight seconds (a slow connection) gives way to the still
     clearTimeout(watchdog);
     watchdog = setTimeout(function () { if (!picked && vid.currentTime < 0.2) { try { vid.pause(); } catch (e) { /* ignore */ } fallback(); } }, 8000);
-  }
-  function goFull() {
-    var el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
-    try { var p = req.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(function () {}); } catch (e) { /* not allowed */ }
   }
   function playIntro() {
     if (!vid.getAttribute('src')) { vid.src = SRC; }
@@ -4775,10 +4799,15 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     });
     watch();
   }
-  vid.addEventListener('ended', function () { window.__mcIntroBusy = false; });
+  vid.addEventListener('ended', function () {
+    window.__mcIntroBusy = false;
+    if (started) return;
+    useStill();   // the artwork sits exactly under the film's last frame, a little sharper
+    setTimeout(function () { if (!started && vid.ended) gate.classList.remove('playing'); }, 120);
+  });
   vid.addEventListener('error', function () { if (gate.getAttribute('data-phase') === 'intro') fallback(); });
 
-  $('#cineGo').addEventListener('click', function () { playIntro(); goFull(); });   // play first: full screen uses up the tap in some browsers
+  $('#cineGo').addEventListener('click', function () { playIntro(); });
   $('#cineSkip').addEventListener('click', function () {
     if (vid.readyState >= 1 && vid.duration > PICK_AT) { try { vid.currentTime = PICK_AT + 0.1; } catch (e) { /* ignore */ } settle(); }
     else { try { vid.pause(); } catch (e) { /* ignore */ } fallback(); }

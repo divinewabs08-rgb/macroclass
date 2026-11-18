@@ -1,4 +1,4 @@
-# Pirc Macroclass
+# Kyros
 
 Narrated chess opening lessons (the Smith-Morra Gambit, and the Pirc Defence: the Byrne Variation and the Classical 6...Bg4), as an installable offline web app.
 
