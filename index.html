@@ -649,6 +649,128 @@ html.three #frame { outline: none !important; }
 /* the engine bar moves to the edge of the screen, clear of the studio */
 html.three .fzeng:not(.top) { position: fixed; left: max(22px, env(safe-area-inset-left)); right: auto; top: 20vh; bottom: 20vh; }
 html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px + env(safe-area-inset-top)); bottom: auto; }
+
+/* ---------- the start page: intro film, then the lesson picker over its last frame */
+.gate.menu.cine { display: block; padding: 0; overflow: hidden; background: #000; color: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; transition: opacity .7s ease; }
+.gate.cine.off { opacity: 0; pointer-events: none; }
+.cine-stage { position: absolute; inset: 0; overflow: hidden; background: #000; }
+.cine-still, .cine-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; transform-origin: 50% 50%;
+  transform: var(--t-intro, scale(1.12)); transition: transform 2.8s cubic-bezier(.2,.7,.2,1), filter 2.8s ease, opacity .4s ease; }
+.gate.cine.portrait .cine-still, .gate.cine.portrait .cine-video { -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+.cine-still { opacity: 0; }
+.gate.still-on .cine-still { opacity: 1; }
+.gate.still-on:not(.playing) .cine-video { opacity: 0; }
+.gate.settled .cine-still, .gate.settled .cine-video { transform: var(--t-settle, scale(1.18)); filter: brightness(.8) saturate(1.06); }
+.cine-shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.6s ease;
+  background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 17%, rgba(0,0,0,0) 40%, rgba(0,0,0,.66) 62%, rgba(0,0,0,.93) 100%); }
+.gate.settled .cine-shade { opacity: 1; }
+
+.gate.cine .mclogo { width: 38px; height: 38px; margin: 0; flex: none; border-radius: 11px; display: grid; place-items: center;
+  background: linear-gradient(160deg, #2a2522, #0b0a0a); box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.1); }
+.gate.cine .mclogo img { width: 76%; height: 76%; }
+
+/* the black screen with one button */
+.cine-enter { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 26px; text-align: center; transition: opacity .45s ease, visibility .45s; }
+.gate.cine:not([data-phase="enter"]) .cine-enter { opacity: 0; visibility: hidden; pointer-events: none; }
+.ce-mark { display: flex; align-items: center; gap: 12px; }
+.ce-word, .pk-word { font: 700 13px/1 var(--mc-ui); letter-spacing: 5px; text-transform: uppercase; color: rgba(255,255,255,.86); }
+.ce-btn { display: inline-flex; align-items: center; gap: 12px; height: 58px; padding: 0 32px 0 26px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,186,120,.45); background: rgba(255,140,60,.08); color: #ffe4c8; font: 700 14px/1 var(--mc-ui); letter-spacing: 4px; text-transform: uppercase;
+  box-shadow: 0 0 70px rgba(255,120,40,.16); animation: ceBreath 2.8s ease-in-out infinite; transition: background .25s, transform .25s; }
+.ce-btn:hover { background: rgba(255,140,60,.18); transform: translateY(-1px); }
+.ce-btn:focus-visible { outline: 2px solid #ffb070; outline-offset: 4px; }
+.ce-btn svg { width: 20px; height: 20px; }
+@keyframes ceBreath { 50% { box-shadow: 0 0 110px rgba(255,120,40,.34); border-color: rgba(255,196,130,.8); } }
+.ce-sub { font: 600 10.5px/1 var(--mc-ui); letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.38); }
+
+/* skip, while the film plays */
+.cine-skip { position: absolute; z-index: 2; right: calc(20px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom));
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 15px 0 18px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.4); color: rgba(255,255,255,.78); font: 600 11.5px/1 var(--mc-ui); letter-spacing: 1.8px; text-transform: uppercase;
+  opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s, background .2s, color .2s; }
+.gate.cine[data-phase="intro"] .cine-skip { opacity: 1; visibility: visible; transition-delay: 1.4s, 1.4s, 0s, 0s; }
+.cine-skip:hover { background: rgba(255,255,255,.12); color: #fff; }
+.cine-skip svg { width: 14px; height: 14px; }
+
+/* the picker */
+.pick { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; overflow-y: auto; overscroll-behavior: contain;
+  padding: calc(18px + env(safe-area-inset-top)) calc(26px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(26px + env(safe-area-inset-left));
+  visibility: hidden; pointer-events: none; }
+.gate.cine[data-phase="pick"] .pick { visibility: visible; pointer-events: auto; }
+.pk-top { display: flex; align-items: center; gap: 12px; }
+.pk-panel { width: min(1180px, 100%); margin: 0 auto; }
+.gate.cine .pk-top, .gate.cine .pk-panel > .eyebrow, .gate.cine .pk-panel > h1, .gate.cine .pk-foot { opacity: 0; }
+.gate.cine[data-phase="pick"] .pk-top { animation: pkIn .9s .1s cubic-bezier(.2,.7,.2,1) both; }
+.gate.cine[data-phase="pick"] .pk-panel > .eyebrow { animation: pkIn .8s .15s cubic-bezier(.2,.7,.2,1) both; }
+.gate.cine[data-phase="pick"] .pk-panel > h1 { animation: pkIn .9s .22s cubic-bezier(.2,.7,.2,1) both; }
+.gate.cine[data-phase="pick"] .pk-foot { animation: pkIn .8s .75s ease both; }
+@keyframes pkIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.gate.cine .eyebrow { font: 700 11px/1 var(--mc-ui); letter-spacing: 3.2px; text-transform: uppercase; color: #ffb070; text-align: left; }
+.gate.menu.cine h1 { margin: 10px 0 20px; text-align: left; color: #fff; font: 800 clamp(30px, 4.2vw, 54px)/1.02 var(--mc-ui); letter-spacing: -1.4px; text-shadow: 0 6px 40px rgba(0,0,0,.65); }
+
+.gate.cine .courses { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; text-align: left; }
+.gate.cine .course { position: relative; display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; border-radius: 20px;
+  background: linear-gradient(180deg, rgba(26,19,16,.58), rgba(8,7,8,.8)); border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 30px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07); backdrop-filter: blur(14px) saturate(1.25); -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  transition: transform .3s cubic-bezier(.2,.7,.2,1), border-color .3s, box-shadow .3s; }
+.gate.cine[data-phase="pick"] .course { animation: pkIn .85s cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(.38s + var(--i, 0) * .11s); }
+.gate.cine .course::before { content: ""; position: absolute; left: 18px; right: 18px; top: 0; height: 2px; border-radius: 2px; opacity: .45; transition: opacity .3s;
+  background: linear-gradient(90deg, transparent, #ff8a3d 30%, #e0353b 70%, transparent); }
+.gate.cine .course:hover { transform: translateY(-4px); border-color: rgba(255,160,90,.5); box-shadow: 0 36px 70px rgba(0,0,0,.5), 0 0 60px rgba(255,110,40,.14); }
+.gate.cine .course:hover::before { opacity: 1; }
+.gate.cine .cmain { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; width: 100%; padding: 20px 20px 18px; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 20px; }
+.gate.cine .cmain:focus-visible { outline: 2px solid #ffb070; outline-offset: -4px; }
+.gate.cine .chead { display: flex; align-items: baseline; gap: 10px; width: 100%; min-width: 0; }
+.gate.cine .cnum { flex: none; font: 700 12px/1 "JetBrains Mono", ui-monospace, monospace; color: #ff9f5a; }
+.gate.cine .ceyebrow { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 500 11px/1.2 "JetBrains Mono", ui-monospace, monospace; letter-spacing: 0; text-transform: none; color: rgba(255,255,255,.52); }
+.gate.cine .ctitle { font: 800 23px/1.1 var(--mc-ui); letter-spacing: -.5px; color: #fff; }
+.gate.cine .ctag { font: 400 14px/1.45 var(--mc-ui); color: rgba(255,255,255,.72); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.gate.cine .cmeta { display: flex; flex-wrap: wrap; gap: 6px; }
+.gate.cine .cmeta span { font: 600 11px/1 var(--mc-ui); color: rgba(255,255,255,.78); padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); }
+.gate.cine .cgo { margin-top: 6px; display: inline-flex; align-items: center; gap: 9px; height: 44px; padding: 0 22px 0 17px; border-radius: 999px;
+  background: linear-gradient(135deg, #ffb066, #ff7a2e 55%, #d9442f); color: #1d0e05; font: 800 14px/1 var(--mc-ui); letter-spacing: .2px;
+  box-shadow: 0 10px 28px rgba(255,110,40,.32), inset 0 1px 0 rgba(255,255,255,.5); transition: transform .25s, box-shadow .25s; }
+.gate.cine .cgo svg { width: 15px; height: 15px; }
+.gate.cine .course:hover .cgo { transform: translateX(3px); box-shadow: 0 14px 34px rgba(255,110,40,.45), inset 0 1px 0 rgba(255,255,255,.5); }
+.gate.cine .cresume { padding: 0 20px 16px; margin-top: -4px; min-height: 0; font: 500 12px/1.4 var(--mc-ui); color: rgba(255,255,255,.55); }
+.gate.cine .linkbtn { padding: 2px; font: 600 12px/1.4 var(--mc-ui); color: #ffc896; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; cursor: pointer; }
+.gate.cine .pk-foot { margin-top: 16px; text-align: left; font: 500 12.5px/1.5 var(--mc-ui); color: rgba(255,255,255,.55); }
+.gate.cine #menuInfo { margin: 6px 0 0; text-align: left; font: 500 12.5px/1.5 var(--mc-ui); color: #ffc896; }
+.gate.cine #menuInfo:empty { display: none; }
+
+/* phones and tablets held upright: the film sits higher and the lessons become rows */
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
+  .cine-shade { background: linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 14%, rgba(0,0,0,0) 30%, rgba(0,0,0,.78) 52%, rgba(0,0,0,.95) 100%); }
+  .pick { padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .gate.menu.cine h1 { font-size: 30px; letter-spacing: -.9px; margin: 8px 0 14px; }
+  .gate.cine .courses { grid-template-columns: 1fr; gap: 10px; }
+  .gate.cine .course { border-radius: 16px; backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(16,12,12,.84); }
+  .gate.cine .course:hover { transform: none; }
+  .gate.cine .cmain { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head go" "title go" "meta go"; column-gap: 14px; row-gap: 6px; align-items: center; padding: 14px 14px 14px 16px; border-radius: 16px; }
+  .gate.cine .chead { grid-area: head; } .gate.cine .ctitle { grid-area: title; font-size: 18px; } .gate.cine .cmeta { grid-area: meta; }
+  .gate.cine .ctag { display: none; }
+  .gate.cine .cmeta span { padding: 4px 8px; font-size: 10.5px; }
+  .gate.cine .cgo { grid-area: go; margin: 0; width: 50px; height: 50px; padding: 0; justify-content: center; }
+  .gate.cine .cgo span { display: none; }
+  .gate.cine .cgo svg { width: 18px; height: 18px; margin-left: 2px; }
+  .gate.cine .cresume { padding: 0 16px 12px; margin-top: -6px; }
+  .gate.cine .pk-foot { font-size: 12px; }
+}
+/* phones held sideways */
+@media (max-height: 560px) and (min-width: 761px) {
+  .pick { gap: 8px; padding-top: calc(10px + env(safe-area-inset-top)); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .gate.menu.cine h1 { font-size: 26px; margin: 4px 0 10px; }
+  .gate.cine .courses { gap: 10px; }
+  .gate.cine .cmain { padding: 12px 14px; gap: 6px; }
+  .gate.cine .ctitle { font-size: 17px; }
+  .gate.cine .ctag, .gate.cine .pk-foot > span { display: none; }
+  .gate.cine .cgo { height: 36px; padding: 0 16px 0 13px; font-size: 13px; margin-top: 2px; }
+  .gate.cine .pk-foot { margin-top: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cine-still, .cine-video { transition: none; }
+  .gate.cine[data-phase="pick"] .course, .gate.cine[data-phase="pick"] .pk-top, .gate.cine[data-phase="pick"] .pk-panel > *, .ce-btn { animation: none; opacity: 1; }
+}
 </style>
 </head>
 <body>
@@ -776,15 +898,27 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
   <p class="note">Your place is saved in this browser after every step. Keys: Space play or pause, Left and Right step, F flip, M control map.</p>
 </div>
 
-<div class="gate menu" id="gate">
-  <div class="box">
-    <div class="mclogo" aria-hidden="true"><img alt=""></div>
-    <div class="eyebrow">Pirc Macroclass · the opening series</div>
-    <h1>Choose your lesson</h1>
-    <p>Narrated lessons from move one to finished grandmaster games. Orbit speaks, moves the pieces, draws the lines and points out every mistake the engine found. Each lesson keeps its own place.</p>
-    <div class="courses" id="courses"></div>
-    <div class="resume">Turn your sound on. One tap opens full screen and the lecture plays by itself. <button class="linkbtn" id="menuTest">Test the voice first</button></div>
-    <div class="resume" id="menuInfo"></div>
+<div class="gate menu cine" id="gate" data-phase="boot">
+  <div class="cine-stage" aria-hidden="true">
+    <img class="cine-still" id="cineStill" alt="" decoding="async">
+    <video class="cine-video" id="cineVideo" playsinline webkit-playsinline preload="auto"></video>
+    <div class="cine-shade"></div>
+  </div>
+  <div class="cine-enter" id="cineEnter">
+    <div class="ce-mark"><span class="mclogo"><img alt=""></span><span class="ce-word">Macroclass</span></div>
+    <button class="ce-btn" id="cineGo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Enter</span></button>
+    <div class="ce-sub">Sound on</div>
+  </div>
+  <button class="cine-skip" id="cineSkip" type="button">Skip intro<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 6 6-6 6M13 6l6 6-6 6"/></svg></button>
+  <div class="pick" id="cinePick">
+    <div class="pk-top"><span class="mclogo" aria-hidden="true"><img alt=""></span><span class="pk-word">Macroclass</span></div>
+    <div class="pk-panel">
+      <div class="eyebrow">The opening series</div>
+      <h1>Choose your lesson</h1>
+      <div class="courses" id="courses"></div>
+      <div class="resume pk-foot"><span>Turn your sound on. The lesson opens full screen and plays by itself.</span> <button class="linkbtn" id="cineReplay" type="button">Replay intro</button></div>
+      <div class="resume" id="menuInfo" role="status"></div>
+    </div>
   </div>
 </div>
 
@@ -3113,21 +3247,21 @@ if (typeof module !== 'undefined') module.exports = { LESSONS_SMITH: LESSONS_SMI
 window.COURSES = {
   smith: {
     lessons: typeof LESSONS_SMITH !== 'undefined' ? LESSONS_SMITH : [], narr: window.NARR_SM, files: window.NARR_FILES_SM,
-    key: 'macroclass.smith.v1', brand: 'Smith-Morra Macroclass', coach: 'Morra coach', name: 'Smith-Morra Gambit', sub: 'Smith-Morra Gambit · 3.c3 · narrated',
+    key: 'macroclass.smith.v1', tag: 'White gives a pawn for a fast, open attack on the Sicilian. Seven systems, every trap.', brand: 'Smith-Morra Macroclass', coach: 'Morra coach', name: 'Smith-Morra Gambit', sub: 'Smith-Morra Gambit · 3.c3 · narrated',
     eyebrow: '1.e4 c5 2.d4 cxd4 3.c3 · for White, then Black', title: 'The Smith-Morra Gambit',
     blurb: 'Seven systems for Black, one at a time: the classical main line to move 15, every other defence and trap, the main line to move 22, the checklist, four full games including Nakamura vs Caruana, Black’s side, the drill, and fifteen common mistakes.',
     facts: ['Seven systems', 'Every trap', 'Van Wely · Anand · Gukesh · Nakamura', 'Black’s side', 'Key moments drill', '15 common mistakes']
   },
   byrne: {
     lessons: typeof LESSONS_BYRNE !== 'undefined' ? LESSONS_BYRNE : [], narr: window.NARR_BY, files: window.NARR_FILES_BY,
-    key: 'pircMasterclass.byrne.v4', brand: 'Pirc Macroclass', name: 'Byrne Variation', sub: 'Byrne Variation · 4.Bg5 · narrated',
+    key: 'pircMasterclass.byrne.v4', tag: 'Black against 4.Bg5 in the Pirc: eleven variations and three weapons, then White’s side.', brand: 'Pirc Macroclass', name: 'Byrne Variation', sub: 'Byrne Variation · 4.Bg5 · narrated',
     eyebrow: '4.Bg5 · for Black, then White', title: 'The Byrne Variation',
     blurb: 'Eleven variations and Black’s three weapons, one at a time: the main line’s key moment, every sideline, two classical games, the main line to move 20, the recap, then two full games.',
     facts: ['Eleven variations', 'The race · the hunt · the strike', 'Four model games', 'White’s side', 'Key moments drill']
   },
   parma: {
     lessons: LESSONS, narr: window.NARR, files: window.NARR_FILES,
-    key: 'pircMasterclass.v1', brand: 'Pirc Macroclass', name: 'The Pirc, 6…Bg4', sub: 'Classical · 6…Bg4 · narrated',
+    key: 'pircMasterclass.v1', tag: 'The Parma Defence against the Classical Pirc, with games by Karpov, Korchnoi and Ivanchuk.', brand: 'Pirc Macroclass', name: 'The Pirc, 6…Bg4', sub: 'Classical · 6…Bg4 · narrated',
     eyebrow: 'Classical · for Black, then White', title: 'The Pirc, 6…Bg4',
     blurb: 'The Parma Defence against the Classical, every branch, three world-class games, and 7.h3 and 5.h3 from White’s side.',
     facts: ['Karpov · Korchnoi · Ivanchuk', 'Rook endgame technique', 'White’s side', 'Memory drill']
@@ -4531,52 +4665,139 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
 </script>
 <script>(function () {
   'use strict';
+  // the start page: a black screen, one tap, the intro film plays with sound, and the lesson picker
+  // rises over its last frame. A lesson starts the moment its card is picked.
   var $ = function (s) { return document.querySelector(s); };
-  var started = false, menuAudio = null;
-  var SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+  var gate = $('#gate'), vid = $('#cineVideo'), still = $('#cineStill');
+  var SRC = 'media/intro.mp4', STILL = 'media/intro-end.jpg', SEEN = 'macroclass.introSeen', PICK_AT = 8.2;
+  var started = false, picked = false, watchdog = 0;
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function savedOf(c) { try { return JSON.parse(localStorage.getItem(c.key) || '{}') || {}; } catch (e) { return {}; } }
-  function info(t) { $('#menuInfo').textContent = t; }
-  function start(id, restart) {
-    if (started) return; started = true;
-    if (menuAudio) { try { menuAudio.pause(); } catch (e) { /* ignore */ } }
-    document.body.setAttribute('data-course', id);
-    window.startCourse(id, { restart: !!restart });
+  function seen() { try { return sessionStorage.getItem(SEEN) === '1'; } catch (e) { return false; } }
+  function markSeen() { try { sessionStorage.setItem(SEEN, '1'); } catch (e) { /* private mode */ } }
+  function phase(p) { gate.setAttribute('data-phase', p); }
+  function info(t) { var m = $('#menuInfo'); if (m) m.textContent = t; }
+
+  // ---------- framing: the film is drawn whole (contain) and scaled from here, so every screen shape gets its own crop.
+  // While it plays, an upright phone sees both eyes (a wider, letterboxed view); when the picker rises it pushes in to fill the screen.
+  var ASPECT = 1284 / 724;
+  function frame() {
+    var vw = gate.clientWidth || window.innerWidth, vh = gate.clientHeight || window.innerHeight;
+    var cw, ch; if (vw / vh < ASPECT) { cw = vw; ch = vw / ASPECT; } else { ch = vh; cw = vh * ASPECT; }
+    var cover = Math.max(vw / cw, vh / ch), upright = vw / vh < 1, narrow = vw <= 760 || (upright && vw <= 1100);
+    function tf(k, fx, ty) {
+      var w = cw * k, tx = -(fx - 0.5) * w, room = Math.max(0, (w - vw) / 2);
+      tx = Math.max(-room, Math.min(room, tx));
+      return 'translate(' + tx.toFixed(1) + 'px,' + (ty * vh).toFixed(1) + 'px) scale(' + k.toFixed(4) + ')';
+    }
+    var kIntro = Math.min(cover, vw / (0.42 * cw));                    // never narrower than both eyes
+    var kSettle = cover * (narrow ? 1.05 : 1.06);
+    gate.style.setProperty('--t-intro', tf(kIntro, 0.5, 0));
+    gate.style.setProperty('--t-settle', tf(kSettle, narrow ? 0.54 : 0.5, narrow ? -0.11 : -0.035));
+    // a soft edge where the letterboxed film meets the black (its box is the whole screen; the picture is the middle band)
+    var top = (1 - ch / vh) / 2 * 100, band = ch / vh * 100, f = band * 0.05;
+    gate.style.setProperty('--fade', 'linear-gradient(180deg, transparent ' + top.toFixed(2) + '%, #000 ' + (top + f).toFixed(2) + '%, #000 ' + (top + band - f).toFixed(2) + '%, transparent ' + (top + band).toFixed(2) + '%)');
+    gate.classList.toggle('portrait', upright);
   }
-  (function () { var lg = document.querySelector('.gate .mclogo img'); if (lg && window.SPRITES && SPRITES.wN) lg.src = SPRITES.wN; })();
+  frame();
+  window.addEventListener('resize', frame);
+  window.addEventListener('orientationchange', function () { setTimeout(frame, 120); });
+
+  // the knight tile beside the wordmark
+  Array.prototype.forEach.call(document.querySelectorAll('.gate .mclogo img'), function (im) { if (window.SPRITES && SPRITES.wN) im.src = SPRITES.wN; });
+
+  // ---------- the three lesson cards
   var host = $('#courses');
-  (window.COURSE_ORDER || Object.keys(window.COURSES)).forEach(function (id) {
+  (window.COURSE_ORDER || Object.keys(window.COURSES)).forEach(function (id, i) {
     var c = window.COURSES[id], L = c.lessons || [];
     var steps = L.reduce(function (a, ch) { return a + ch.steps.length; }, 0);
     var sv = savedOf(c), resume = sv.ci != null && L[sv.ci] && L[sv.ci].steps[sv.si] && (sv.ci > 0 || sv.si > 0);
-    var el = document.createElement('div'); el.className = 'course'; el.setAttribute('data-course', id);
-    el.innerHTML = '<div class="ceyebrow">' + esc(c.eyebrow) + '</div><h2>' + esc(c.title) + '</h2><p>' + esc(c.blurb) + '</p>' +
-      '<div class="facts"><span>' + L.length + ' chapters</span><span>' + steps + ' steps</span>' + c.facts.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('') + '</div>' +
-      '<button class="begin" data-start="' + id + '"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg><span>' + (resume ? 'Resume' : 'Begin') + '</span></button>' +
-      '<div class="cresume">' + (resume ? 'You stopped at chapter ' + (sv.ci + 1) + ', ' + esc(L[sv.ci].title) + ', step ' + (sv.si + 1) + '. <button class="linkbtn" data-restart="' + id + '">Start from the beginning</button>' : 'Starts at chapter 1') + '</div>';
+    var el = document.createElement('div'); el.className = 'course'; el.setAttribute('data-course', id); el.style.setProperty('--i', i);
+    el.innerHTML = '<button class="cmain" type="button" data-start="' + id + '">' +
+      '<span class="chead"><span class="cnum">' + ('0' + (i + 1)).slice(-2) + '</span><span class="ceyebrow">' + esc(c.eyebrow) + '</span></span>' +
+      '<span class="ctitle">' + esc(c.title) + '</span>' +
+      '<span class="ctag">' + esc(c.tag || c.blurb) + '</span>' +
+      '<span class="cmeta"><span>' + L.length + ' chapters</span><span>' + steps + ' steps</span></span>' +
+      '<span class="cgo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg><span>' + (resume ? 'Resume' : 'Begin') + '</span></span>' +
+      '</button>' +
+      (resume ? '<div class="cresume">Chapter ' + (sv.ci + 1) + ', ' + esc(L[sv.ci].title) + ', step ' + (sv.si + 1) + ' · <button class="linkbtn" type="button" data-restart="' + id + '">Start over</button></div>' : '');
     host.appendChild(el);
   });
+
+  // ---------- start a lesson (inside the tap, so the narration may play)
+  function start(id, restart) {
+    if (started) return; started = true;
+    window.__mcIntroBusy = false; clearTimeout(watchdog);
+    try { vid.pause(); vid.muted = true; } catch (e) { /* ignore */ }
+    markSeen();
+    document.body.setAttribute('data-course', id);
+    window.startCourse(id, { restart: !!restart });
+    setTimeout(function () { try { vid.removeAttribute('src'); vid.load(); } catch (e) { /* ignore */ } }, 900);
+  }
   host.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-start]'), r = e.target.closest('[data-restart]');
-    if (b) start(b.getAttribute('data-start'), false);
-    else if (r) start(r.getAttribute('data-restart'), true);
+    var r = e.target.closest('[data-restart]'), b = e.target.closest('[data-start]');
+    if (r) start(r.getAttribute('data-restart'), true);
+    else if (b) start(b.getAttribute('data-start'), false);
   });
-  // the voice test works before any lesson starts: it plays the test clip from the first pack
-  $('#menuTest').addEventListener('click', function () {
-    var c = window.COURSES[window.COURSE_ORDER[0]], m = (c.narr || {}).test;
-    if (!m || !(c.files || {})[m.p]) { info('The narration audio is missing from this page.'); return; }
-    menuAudio = menuAudio || new Audio();
-    try { menuAudio.src = SILENT; var p0 = menuAudio.play(); if (p0 && p0.catch) p0.catch(function () {}); } catch (e) { /* ignore */ }
-    info('Loading the test sentence…');
-    fetch(c.files[m.p]).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.arrayBuffer(); }).then(function (buf) {
-      if (started) return;
-      menuAudio.src = URL.createObjectURL(new Blob([buf.slice(m.o, m.o + m.l)], { type: 'audio/mpeg' })); try { menuAudio.preservesPitch = true; menuAudio.defaultPlaybackRate = 1.15; menuAudio.playbackRate = 1.15; } catch (e) { /* ignore */ }
-      return menuAudio.play().then(function () { info('Playing Orbit’s voice now. If you hear nothing, raise the volume.'); });
-    }).catch(function (err) { info('The audio could not be played: ' + (err && (err.name || err.message))); });
+
+  // ---------- the film
+  function useStill() { if (!still.getAttribute('src')) still.src = STILL; gate.classList.add('still-on'); }
+  function settle() {
+    if (picked) return; picked = true; clearTimeout(watchdog);
+    markSeen(); gate.classList.add('settled'); phase('pick');
+  }
+  function fallback() { window.__mcIntroBusy = false; gate.classList.remove('playing'); useStill(); settle(); }
+  function watch() {
+    (function tick() {
+      if (picked || started) return;
+      if (vid.ended || vid.currentTime >= PICK_AT) { settle(); return; }
+      requestAnimationFrame(tick);
+    })();
+    // a film that has not started after eight seconds (a slow connection) gives way to the still
+    clearTimeout(watchdog);
+    watchdog = setTimeout(function () { if (!picked && vid.currentTime < 0.2) { try { vid.pause(); } catch (e) { /* ignore */ } fallback(); } }, 8000);
+  }
+  function goFull() {
+    var el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+    try { var p = req.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(function () {}); } catch (e) { /* not allowed */ }
+  }
+  function playIntro() {
+    if (!vid.getAttribute('src')) { vid.src = SRC; }
+    picked = false; window.__mcIntroBusy = true;
+    gate.classList.remove('settled'); gate.classList.add('playing'); phase('intro');
+    try { vid.muted = false; if (vid.currentTime > 0) vid.currentTime = 0; } catch (e) { /* ignore */ }
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {
+      // sound refused: play it silent rather than not at all
+      vid.muted = true; var p2 = vid.play(); if (p2 && p2.catch) p2.catch(fallback);
+    });
+    watch();
+  }
+  vid.addEventListener('ended', function () { window.__mcIntroBusy = false; });
+  vid.addEventListener('error', function () { if (gate.getAttribute('data-phase') === 'intro') fallback(); });
+
+  $('#cineGo').addEventListener('click', function () { playIntro(); goFull(); });   // play first: full screen uses up the tap in some browsers
+  $('#cineSkip').addEventListener('click', function () {
+    if (vid.readyState >= 1 && vid.duration > PICK_AT) { try { vid.currentTime = PICK_AT + 0.1; } catch (e) { /* ignore */ } settle(); }
+    else { try { vid.pause(); } catch (e) { /* ignore */ } fallback(); }
   });
-  window.__menu = { start: start };
+  $('#cineReplay').addEventListener('click', function () { playIntro(); });
+  document.addEventListener('keydown', function (e) {
+    if (started) return;
+    var ph = gate.getAttribute('data-phase');
+    if (ph === 'enter' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('#cineGo').click(); }
+    else if (ph === 'intro' && e.key === 'Escape') { $('#cineSkip').click(); }
+  });
+
+  // first visit in this tab: the black screen and the film; back from a lesson (or reduced motion): straight to the picker
+  if (seen() || REDUCED) { useStill(); settle(); }
+  else { vid.src = SRC; try { vid.load(); } catch (e) { /* ignore */ } phase('enter'); setTimeout(function () { var b = $('#cineGo'); if (b && !started) try { b.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 50); }
+
+  window.__menu = { start: start, phase: function () { return gate.getAttribute('data-phase'); }, skip: function () { $('#cineSkip').click(); } };
 })();
 </script>
-<script>if ('serviceWorker' in navigator) { var hadSW = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { var g = document.getElementById('gate'); if (hadSW && !reloaded && g && !g.classList.contains('off')) { reloaded = true; location.reload(); } }); window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); }); }</script>
+<script>if ('serviceWorker' in navigator) { var hadSW = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { var g = document.getElementById('gate'); if (hadSW && !reloaded && g && !g.classList.contains('off') && !window.__mcIntroBusy) { reloaded = true; location.reload(); } }); window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); }); }</script>
 </body>
 </html>
