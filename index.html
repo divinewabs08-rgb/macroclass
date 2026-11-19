@@ -746,7 +746,7 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
 .gate.cine #menuInfo:empty { display: none; }
 
 /* phones and tablets held upright: the film sits higher and the lessons become rows */
-@media (max-width: 760px) {   /* phones only: tablets keep the desktop layout */
+@media (max-width: 700px) {   /* phones only: tablets (an iPad mini held upright is 744 px) keep the desktop layout */
   .cine-shade { background: linear-gradient(180deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 14%, rgba(0,0,0,0) 30%, rgba(0,0,0,.78) 52%, rgba(0,0,0,.95) 100%); }
   .pick { padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
   .gate.menu.cine h1 { font-size: 30px; letter-spacing: -.9px; margin: 8px 0 14px; }
@@ -764,7 +764,7 @@ html.three .fzeng.top { position: fixed; left: 12px; right: auto; top: calc(12px
   .gate.cine .pk-foot { font-size: 12px; }
 }
 /* phones held sideways */
-@media (max-height: 560px) and (min-width: 761px) {
+@media (max-height: 560px) and (min-width: 701px) {
   .pick { gap: 8px; padding-top: calc(10px + env(safe-area-inset-top)); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
   .gate.menu.cine h1 { font-size: 26px; margin: 4px 0 10px; }
   .gate.cine .courses { gap: 10px; }
@@ -863,13 +863,13 @@ html.pfull.focus .pfx { opacity: 0; visibility: hidden; pointer-events: none; tr
 .cine-video.cine-loop { opacity: 0; transition: transform 2.8s cubic-bezier(.2,.7,.2,1), filter 2.8s ease, opacity .6s ease; }
 .gate.loop-on .cine-video.cine-loop { opacity: 1; }
 /* tablets: the desktop cards, three across; upright, a touch more compact */
-@media (min-width: 761px) {
+@media (min-width: 701px) {
   .gate.cine .courses { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gate.cine .course .cmain { flex: 1 1 auto; }
   .gate.cine .cmain .cgo { margin-top: auto; }
   .gate.cine .cmain .cmeta { margin-bottom: 6px; }
 }
-@media (min-width: 761px) and (orientation: portrait) {
+@media (min-width: 701px) and (orientation: portrait) {
   .gate.cine .courses { gap: 12px; }
   .gate.cine .cmain { padding: 16px 15px 15px; gap: 8px; }
   .gate.cine .ctitle { font-size: 19px; }
@@ -3498,11 +3498,11 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
   // pearl-white and jade-green board: marble veining on the light squares, polished jade on the dark ones
   // flat green and cream board
   var SKINS = { marble: { name: 'blue marble', tex: 'media/board-marble.jpg' }, bb: { name: 'black & brown', tex: 'media/bb-board.jpg' } }, SKIN_KEY = 'kyros.board';
-  var skin = 'marble'; try { if (SKINS[localStorage.getItem(SKIN_KEY)]) skin = localStorage.getItem(SKIN_KEY); } catch (e) { /* storage unavailable */ }
+  var skin = 'bb'; try { if (SKINS[localStorage.getItem(SKIN_KEY)]) skin = localStorage.getItem(SKIN_KEY); } catch (e) { /* storage unavailable */ }
   function buildWood() {
     var svg = $('#wood'), dark = '';
     for (var r = 0; r < 8; r++) for (var f = 0; f < 8; f++) if ((r + f) % 2 === 1) dark += '<rect x="' + f * 100 + '" y="' + r * 100 + '" width="100" height="100"/>';
-    svg.innerHTML = '<image class="tex" href="' + SKINS[skin].tex + '" x="0" y="0" width="800" height="800" preserveAspectRatio="none"/><image class="seams" href="media/board-seams.png" x="0" y="0" width="800" height="800" preserveAspectRatio="none"/>';
+    svg.innerHTML = '<image class="tex" href="' + SKINS[skin].tex + '" x="0" y="0" width="800" height="800" preserveAspectRatio="none"/>';
   }
   // ---------- two boards: the blue marble (frame, banner and ribbon) and the black & brown; the choice is kept for every lesson
   function applySkin() {
@@ -4720,7 +4720,7 @@ window.COURSE_ORDER = ['smith', 'byrne', 'parma'].filter(function (id) { return 
     try { if (V3.enabled && localStorage.getItem(V3.KEY) === '1') set3D(true); } catch (e) { /* ignore */ }
   }
   // back to the lesson menu: a fresh page load, so nothing from this lesson keeps running
-  $('#btnMenu').addEventListener('click', function () { cancelSpeech(); persist(); try { location.reload(); } catch (e) { location.href = location.href; } });
+  $('#btnMenu').addEventListener('click', function () { cancelSpeech(); persist(); try { sessionStorage.setItem('macroclass.introSeen', '1'); } catch (e) { /* private mode: the intro shows again */ } try { location.reload(); } catch (e) { location.href = location.href; } });
 
   // ---------- 3D studio view (a separate file, loaded the first time it is switched on)
   var V3 = { enabled: false, on: false, loading: false, KEY: 'pirc.view3d' };   // the public build switches this off
@@ -4974,14 +4974,17 @@ window.KyrosLive = (function () {
   // rises over its last frame. A lesson starts the moment its card is picked.
   var $ = function (s) { return document.querySelector(s); };
   var gate = $('#gate'), vid = $('#cineVideo'), still = $('#cineStill');
-  var SRC = 'media/intro-1c17b7ed75.mp4', STILL = 'media/intro-end-4c77bc925b.jpg', MASK = '', SPLASH = 'media/intro-splash-9e3c5b0e30.jpg', LOOP = 'media/intro-loop-aeac4140e9.mp4', SEEN = 'macroclass.introSeen', PICK_AT = 14.0;
+  var SRC = 'media/intro-1c17b7ed75.mp4', STILL = 'media/intro-end-4c77bc925b.jpg', MASK = '', SPLASH = 'media/intro-splash-9e3c5b0e30.jpg', LOOP = 'media/intro-loop-aeac4140e9.mp4', LOOPWAV = 'media/intro-loop-50561dfb3b.wav', SEEN = 'macroclass.introSeen', PICK_AT = 14.0;
   var SPLASH_MS = 900;   // the King's close-up, alone, for a moment before the film
+  var HOLD_MS = 30000;   // after the film, the King and Queen breathe (with sound) this long before the first lesson starts by itself
   var started = false, picked = false, watchdog = 0;
   var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function savedOf(c) { try { return JSON.parse(localStorage.getItem(c.key) || '{}') || {}; } catch (e) { return {}; } }
-  function seen() { try { return sessionStorage.getItem(SEEN) === '1'; } catch (e) { return false; } }
-  function markSeen() { try { sessionStorage.setItem(SEEN, '1'); } catch (e) { /* private mode */ } }
+  // set by the lesson's menu button just before it reloads the page, and used once: every other opening of the app
+  // (a new launch, a reload, coming back later) starts with Enter, the King's close-up and the film
+  function seen() { var v = false; try { v = sessionStorage.getItem(SEEN) === '1'; sessionStorage.removeItem(SEEN); } catch (e) { /* private mode */ } return v; }
+  function markSeen() { /* nothing: see seen() */ }
   function phase(p) { gate.setAttribute('data-phase', p); }
   function info(t) { var m = $('#menuInfo'); if (m) m.textContent = t; }
 
@@ -4991,7 +4994,7 @@ window.KyrosLive = (function () {
   function frame() {
     var vw = gate.clientWidth || window.innerWidth, vh = gate.clientHeight || window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 3);
     var cw, ch; if (vw / vh < ASPECT) { cw = vw; ch = vw / ASPECT; } else { ch = vh; cw = vh * ASPECT; }
-    var cover = Math.max(vw / cw, vh / ch), upright = vw / vh < 1, narrow = vw <= 760;   // tablets, upright or not, get the desktop layout
+    var cover = Math.max(vw / cw, vh / ch), upright = vw / vh < 1, narrow = vw <= 700;   // tablets (an iPad mini upright is 744 px), upright or not, get the desktop layout
     function tf(k, fx, ty) {
       var w = cw * k, tx = -(fx - 0.5) * w, room = Math.max(0, (w - vw) / 2);
       tx = Math.max(-room, Math.min(room, tx));
@@ -5058,7 +5061,7 @@ window.KyrosLive = (function () {
     if (started) return; started = true;
     window.__mcIntroBusy = false; clearTimeout(watchdog);
     try { vid.pause(); vid.muted = true; } catch (e) { /* ignore */ }
-    loopOff(); gate.classList.remove('splash');
+    loopOff(true); gate.classList.remove('splash');
     markSeen(); theme('#ffffff');
     document.body.setAttribute('data-course', id);
     window.startCourse(id, { restart: !!restart });
@@ -5083,15 +5086,51 @@ window.KyrosLive = (function () {
   }
   document.addEventListener('visibilitychange', function () { if (!live || started) return; if (document.hidden) live.pause(); else if (liveWanted) live.play(false); });
   function useStill() { if (!still.getAttribute('src')) still.src = STILL; gate.classList.add('still-on'); }
-  var loopVid = $('#cineLoop');
-  function loopOn() {
-    if (REDUCED || started || !loopVid) return;
+  var loopVid = $('#cineLoop'), autoTimer = 0;
+  // the loop's sound plays gaplessly through Web Audio (unlocked by the Enter tap); the picture follows the sound's clock
+  var loopBuf = null, loopFetch = null, loopSrc = null, loopGain = null, loopT0 = 0, soundWanted = false, syncTimer = 0;
+  function AC() { return window.__kyrosAC || null; }
+  function loadLoopSound() {
+    var ac = AC(); if (!ac || loopBuf || loopFetch) return;
+    loopFetch = fetch(LOOPWAV).then(function (r) { if (!r.ok) throw new Error('loop sound'); return r.arrayBuffer(); })
+      .then(function (b) { return new Promise(function (res, rej) { ac.decodeAudioData(b, res, rej); }); })
+      .then(function (buf) { loopBuf = buf; if (soundWanted) loopSound(); })
+      .catch(function () { loopFetch = null; });
+  }
+  function loopSound() {
+    var ac = AC(); if (!ac || !loopBuf || loopSrc || started) return;
+    try {
+      if (ac.state === 'suspended') ac.resume();
+      loopGain = ac.createGain(); loopGain.gain.value = 1; loopGain.connect(ac.destination);
+      loopSrc = ac.createBufferSource(); loopSrc.buffer = loopBuf; loopSrc.loop = true; loopSrc.connect(loopGain);
+      loopT0 = ac.currentTime + 0.02; loopSrc.start(loopT0);
+      try { loopVid.currentTime = 0; } catch (e) { /* ignore */ }
+      clearInterval(syncTimer);
+      syncTimer = setInterval(function () {   // keep the breathing on the picture: nudge the picture if it drifts
+        if (!loopSrc || loopVid.paused || !loopVid.duration) return;
+        var D = loopBuf.duration, want = ((ac.currentTime - loopT0) % D + D) % D, d = loopVid.currentTime - want;
+        if (d > D / 2) d -= D; else if (d < -D / 2) d += D;
+        if (Math.abs(d) > 0.12) try { loopVid.currentTime = want; } catch (e) { /* ignore */ }
+      }, 1000);
+    } catch (e) { loopSrc = null; }
+  }
+  function loopSoundOff(fade) {
+    soundWanted = false; clearInterval(syncTimer);
+    if (!loopSrc) return;
+    var s = loopSrc, g = loopGain, ac = AC(); loopSrc = null;
+    try { if (fade && ac) { g.gain.setTargetAtTime(0, ac.currentTime, 0.25); setTimeout(function () { try { s.stop(); } catch (e) { /* ignore */ } }, 1500); } else s.stop(); } catch (e) { /* ignore */ }
+  }
+  function loopOn(withSound, fromStart) {
+    if (started || !loopVid) return;
     if (!loopVid.getAttribute('src')) loopVid.src = LOOP;
     loopVid.muted = true;
+    if (fromStart) try { loopVid.currentTime = 0; } catch (e) { /* ignore */ }
+    if (withSound) { soundWanted = true; loadLoopSound(); loopSound(); }
+    if (REDUCED) return;
     var p = loopVid.play(); var show = function () { if (!started) gate.classList.add('loop-on'); };
     if (p && p.then) p.then(show).catch(function () { /* the still stays */ }); else show();
   }
-  function loopOff() { gate.classList.remove('loop-on'); try { loopVid.pause(); } catch (e) { /* ignore */ } }
+  function loopOff(fade) { clearTimeout(autoTimer); autoTimer = 0; loopSoundOff(fade); gate.classList.remove('loop-on'); try { loopVid.pause(); } catch (e) { /* ignore */ } }
   function settle() {
     if (picked) return; picked = true; clearTimeout(watchdog);
     markSeen(); gate.classList.add('settled'); phase('pick');
@@ -5117,7 +5156,8 @@ window.KyrosLive = (function () {
   function playIntro(withSplash) {
     if (!vid.getAttribute('src')) { vid.src = SRC; }
     picked = false; window.__mcIntroBusy = true; liveWanted = false; if (live) live.pause();
-    gate.classList.remove('settled'); loopOff(); gate.classList.add('playing'); phase('intro'); unlockVoice();
+    gate.classList.remove('settled'); loopOff(false); gate.classList.add('playing'); phase('intro'); unlockVoice(); loadLoopSound();
+    if (!loopVid.getAttribute('src')) { loopVid.src = LOOP; try { loopVid.load(); } catch (e) { /* ignore */ } }
     if (withSplash && splash.complete && splash.naturalWidth) {   // the King's close-up first, nothing else, then the film
       gate.classList.add('splash'); setTimeout(function () { gate.classList.remove('splash'); }, SPLASH_MS);
     }
@@ -5132,9 +5172,13 @@ window.KyrosLive = (function () {
   vid.addEventListener('ended', function () {
     window.__mcIntroBusy = false;
     if (started) return;
-    // the film is over: the first lesson starts by itself (the voice was unlocked by the Enter tap)
+    settle();
+    // the film is over: the King and Queen keep breathing behind the lessons for thirty seconds, then the first lesson
+    // starts by itself (its voice was unlocked by the Enter tap). Picking a lesson or replaying the film cancels this.
+    loopOn(true, true);
     var first = (window.COURSE_ORDER || Object.keys(window.COURSES))[0];
-    useStill(); start(first, false);
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(function () { if (!started && gate.getAttribute('data-phase') === 'pick') { useStill(); start(first, false); } }, HOLD_MS);
   });
   vid.addEventListener('error', function () { if (gate.getAttribute('data-phase') === 'intro') fallback(); });
 
@@ -5156,7 +5200,7 @@ window.KyrosLive = (function () {
   if (seen() || REDUCED) { useStill(); settle(); loopOn(); }
   else { splash.src = SPLASH; vid.src = SRC; try { vid.load(); } catch (e) { /* ignore */ } phase('enter'); setTimeout(function () { var b = $('#cineGo'); if (b && !started) try { b.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 50); }
 
-  window.__menu = { liveAt: function (s) { if (live) { live.pause(); live.renderAt(s); } }, start: start, phase: function () { return gate.getAttribute('data-phase'); }, skip: function () { $('#cineSkip').click(); } };
+  window.__menu = { loopState: function () { return { sound: !!loopSrc, waiting: !!autoTimer && !started, ctx: AC() ? AC().state : null }; }, liveAt: function (s) { if (live) { live.pause(); live.renderAt(s); } }, start: start, phase: function () { return gate.getAttribute('data-phase'); }, skip: function () { $('#cineSkip').click(); } };
 })();
 </script>
 <script>if ('serviceWorker' in navigator) { var hadSW = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { var g = document.getElementById('gate'); if (hadSW && !reloaded && g && !g.classList.contains('off') && !window.__mcIntroBusy) { reloaded = true; location.reload(); } }); window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); }); }</script>
