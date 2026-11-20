@@ -865,6 +865,9 @@ html.pfull.focus .pfx { opacity: 0; visibility: hidden; pointer-events: none; tr
 /* the King and Queen breathing behind the lessons when you come back to the menu */
 .cine-video.cine-loop { opacity: 0; transition: transform 2.8s cubic-bezier(.2,.7,.2,1), filter 2.8s ease, opacity .6s ease; }
 .gate.loop-on .cine-video.cine-loop { opacity: 1; }
+/* the loop's two copies take turns: the one waiting is hidden, and after the first fade a turn changes at once */
+.gate .cine-video.cine-loop.back { opacity: 0; }
+.gate.loop-swap .cine-video.cine-loop { transition: transform 2.8s cubic-bezier(.2,.7,.2,1), filter 2.8s ease; }
 /* tablets: the desktop cards, three across; upright, a touch more compact */
 @media (min-width: 701px) {
   .gate.cine .courses { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -6573,7 +6576,7 @@ window.KyrosLive = (function () {
   // A lesson starts the moment its card is picked.
   var $ = function (s) { return document.querySelector(s); };
   var gate = $('#gate'), vid = $('#cineVideo'), still = $('#cineStill');
-  var SRC = 'media/intro-1c17b7ed75.mp4', STILL = 'media/intro-end-4c77bc925b.jpg', MASK = '', SPLASH = 'media/intro-splash-9e3c5b0e30.jpg', LOOP = 'media/intro-loop-aeac4140e9.mp4', LOOPWAV = 'media/intro-loop-50561dfb3b.wav', SEEN = 'macroclass.introSeen';
+  var SRC = 'media/intro-5ba244f865.mp4', STILL = 'media/intro-end-2d3c288c45.jpg', MASK = '', SPLASH = 'media/intro-splash-9e3c5b0e30.jpg', LOOP = 'media/intro-loop-48570c3bb6.mp4', LOOPWAV = 'media/intro-loop-7dd120f745.wav', SEEN = 'macroclass.introSeen';
   var SPLASH_MS = 900;   // the King's close-up, alone, for a moment before the film (longer if the film is still loading)
   var WAIT_MS = 25000;   // a film that has not started after this long (a very slow connection) gives way to the still
   var started = false, picked = false, watchdog = 0, filmDone = false, loopPreloaded = false;
@@ -6703,18 +6706,17 @@ window.KyrosLive = (function () {
       loopGain = ac.createGain(); loopGain.gain.value = 1; loopGain.connect(ac.destination);
       loopSrc = ac.createBufferSource(); loopSrc.buffer = loopBuf; loopSrc.loop = true; loopSrc.connect(loopGain);
       // the sound starts where the picture is, so the breath and the picture begin together
-      var D0 = loopBuf.duration, off = (!loopVid.paused && loopVid.currentTime) ? loopVid.currentTime % D0 : 0, at = ac.currentTime + 0.03;
+      var lv = loopFront || loopVid, D0 = loopBuf.duration, off = (!lv.paused && lv.currentTime) ? lv.currentTime % D0 : 0, at = ac.currentTime + 0.03;
       loopT0 = at - off; loopSrc.start(at, off);
       clearInterval(syncTimer);
-      syncTimer = setInterval(function () {   // keep the breathing on the picture
-        if (!loopSrc || loopVid.paused || loopVid.seeking || !loopVid.duration) return;
-        var D = loopBuf.duration, want = ((ac.currentTime - loopT0) % D + D) % D, d = loopVid.currentTime - want;
+      syncTimer = setInterval(function () {   // keep the breathing on the picture: a small drift inside one breath is taken
+        // up by running the picture a touch faster or slower (never seen); each new breath restarts the picture anyway
+        var v = loopFront; if (!loopSrc || !v || v.paused || v.seeking || !v.duration) return;
+        var D = loopBuf.duration, want = ((ac.currentTime - loopT0) % D + D) % D, d = v.currentTime - want;
         if (d > D / 2) d -= D; else if (d < -D / 2) d += D;
-        // a large slip (the picture stalled): one jump; a small drift: the picture runs a touch faster or slower until it
-        // is back on the breath, which the eye never sees (a jump every loop would show)
-        if (Math.abs(d) > 0.5) { try { loopVid.currentTime = want; loopVid.playbackRate = 1; } catch (e) { /* ignore */ } return; }
+        if (Math.abs(d) > 0.5) return;
         var r = 1 - Math.max(-0.08, Math.min(0.08, d * 0.6));
-        if (Math.abs(loopVid.playbackRate - r) > 0.004) try { loopVid.playbackRate = r; } catch (e) { /* ignore */ }
+        if (Math.abs(v.playbackRate - r) > 0.004) try { v.playbackRate = r; } catch (e) { /* ignore */ }
       }, 250);
     } catch (e) { loopSrc = null; }
   }
@@ -6724,22 +6726,65 @@ window.KyrosLive = (function () {
     var s = loopSrc, g = loopGain, ac = AC(); loopSrc = null;
     try { if (fade && ac) { g.gain.setTargetAtTime(0, ac.currentTime, 0.25); setTimeout(function () { try { s.stop(); } catch (e) { /* ignore */ } }, 1500); } else s.stop(); } catch (e) { /* ignore */ }
   }
+  // ---------- the loop: two copies of the same short film take turns, so the picture never stutters where it goes round
+  // (a single video restarting itself freezes for a moment every time). Each turn starts with the breath.
+  var loop2 = null, loopFront = null, loopRaf = 0, lastPos = -1, loopRunning = false, swapReady = 0;
+  function makeLoop2() {
+    if (loop2 || !loopVid) return;
+    loop2 = loopVid.cloneNode(false); loop2.id = 'cineLoop2'; loop2.muted = true; loop2.loop = false; loop2.preload = 'auto';
+    loop2.setAttribute('aria-hidden', 'true'); loop2.classList.add('back');
+    loop2.src = loopVid.getAttribute('src') || LOOP;
+    loopVid.parentNode.insertBefore(loop2, loopVid.nextSibling);
+    try { loop2.load(); } catch (e) { /* ignore */ }
+  }
   function preloadLoop() {
     if (loopPreloaded || !loopVid) return; loopPreloaded = true;
     try { loopVid.preload = 'auto'; if (!loopVid.getAttribute('src')) loopVid.src = LOOP; loopVid.load(); } catch (e) { /* ignore */ }
+    makeLoop2();
+  }
+  function soundPos() { var ac = AC(); if (!loopSrc || !loopBuf || !ac) return null; var D = loopBuf.duration; return ((ac.currentTime - loopT0) % D + D) % D; }
+  function swapLoop() {
+    var cur = loopFront, nxt = cur === loopVid ? loop2 : loopVid;
+    if (!nxt || nxt.readyState < 2) { try { cur.currentTime = 0; cur.play(); } catch (e) { /* ignore */ } return; }   // the copy is not ready yet
+    try { nxt.playbackRate = 1; if (nxt.currentTime > 0.01) nxt.currentTime = 0; } catch (e) { /* ignore */ }
+    var p = nxt.play(); if (p && p.catch) p.catch(function () {});
+    nxt.classList.remove('back'); cur.classList.add('back'); loopFront = nxt;
+    setTimeout(function () { if (loopFront !== cur) try { cur.pause(); cur.playbackRate = 1; cur.currentTime = 0; } catch (e) { /* ignore */ } }, 150);
+  }
+  function loopTick() {
+    loopRaf = 0; if (!loopRunning || started) return;
+    var cur = loopFront, pos = soundPos();
+    if (cur && Date.now() > swapReady) {
+      // with sound: a new turn begins exactly when the breath goes round; without: when the picture reaches its end
+      // (the new copy is started a few hundredths early: that is how long a picture takes to get moving)
+      if (pos != null) { if (pos >= loopBuf.duration - 0.06 || (lastPos >= 0 && pos < lastPos - 0.5)) { swapLoop(); swapReady = Date.now() + 1000; } }
+      else if (cur.duration && (cur.ended || cur.currentTime >= cur.duration - 0.05)) { swapLoop(); swapReady = Date.now() + 1000; }
+    }
+    if (pos != null) lastPos = pos;
+    loopRaf = requestAnimationFrame(loopTick);
   }
   // the loop runs for as long as the start page shows; its sound starts once the picture is moving
   function loopOn(withSound, fromStart) {
     if (started || !loopVid) return;
     if (!loopVid.getAttribute('src')) loopVid.src = LOOP;
-    loopVid.muted = true; loopVid.loop = true; try { loopVid.playbackRate = 1; } catch (e) { /* ignore */ }
+    makeLoop2();
+    loopVid.muted = true; loopVid.loop = false; try { loopVid.playbackRate = 1; } catch (e) { /* ignore */ }
+    loopVid.classList.remove('back'); loop2.classList.add('back'); loopFront = loopVid; lastPos = -1;
     if (fromStart) try { loopVid.currentTime = 0; } catch (e) { /* ignore */ }
     soundWanted = !!withSound; if (withSound) loadLoopSound();
     if (REDUCED) { if (soundWanted) loopSound(); return; }
-    var p = loopVid.play(); var show = function () { if (started) return; gate.classList.add('loop-on'); if (soundWanted) loopSound(); };
+    var p = loopVid.play(); var show = function () {
+      if (started) return; gate.classList.add('loop-on'); if (soundWanted) loopSound();
+      loopRunning = true; swapReady = Date.now() + 1000; if (!loopRaf) loopRaf = requestAnimationFrame(loopTick);
+      setTimeout(function () { if (!started) gate.classList.add('loop-swap'); }, 700);   // after the first fade, turns change at once
+    };
     if (p && p.then) p.then(show).catch(function () { if (soundWanted) loopSound(); /* the still stays */ }); else show();
   }
-  function loopOff(fade) { clearTimeout(autoTimer); autoTimer = 0; loopSoundOff(fade); gate.classList.remove('loop-on'); try { loopVid.pause(); } catch (e) { /* ignore */ } }
+  function loopOff(fade) {
+    clearTimeout(autoTimer); autoTimer = 0; loopSoundOff(fade); loopRunning = false; if (loopRaf) cancelAnimationFrame(loopRaf); loopRaf = 0; lastPos = -1;
+    gate.classList.remove('loop-on', 'loop-swap');
+    [loopVid, loop2].forEach(function (v) { if (v) try { v.pause(); } catch (e) { /* ignore */ } });
+  }
   function settle() {
     if (picked) return; picked = true; clearTimeout(watchdog);
     markSeen(); gate.classList.add('settled'); phase('pick');
@@ -6810,7 +6855,7 @@ window.KyrosLive = (function () {
   if (seen() || REDUCED) { useStill(); settle(); loopOn(); }
   else { splash.src = SPLASH; vid.src = SRC; try { vid.load(); } catch (e) { /* ignore */ } phase('enter'); setTimeout(function () { var b = $('#cineGo'); if (b && !started) try { b.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 50); }
 
-  window.__menu = { loopState: function () { var ac = AC(), d = null; if (ac && loopSrc && loopBuf && loopVid.duration) { var D = loopBuf.duration, w = ((ac.currentTime - loopT0) % D + D) % D; d = loopVid.currentTime - w; if (d > D / 2) d -= D; else if (d < -D / 2) d += D; d = Math.round(d * 1000) / 1000; } return { sound: !!loopSrc, drift: d, rate: loopVid ? loopVid.playbackRate : null, ctx: ac ? ac.state : null }; }, liveAt: function (s) { if (live) { live.pause(); live.renderAt(s); } }, start: start, phase: function () { return gate.getAttribute('data-phase'); }, skip: function () { $('#cineSkip').click(); } };
+  window.__menu = { loopState: function () { var ac = AC(), d = null; var lv = loopFront || loopVid; if (ac && loopSrc && loopBuf && lv.duration) { var D = loopBuf.duration, w = ((ac.currentTime - loopT0) % D + D) % D; d = lv.currentTime - w; if (d > D / 2) d -= D; else if (d < -D / 2) d += D; d = Math.round(d * 1000) / 1000; } return { sound: !!loopSrc, drift: d, rate: loopFront ? loopFront.playbackRate : null, front: loopFront ? loopFront.id : null, ctx: ac ? ac.state : null }; }, liveAt: function (s) { if (live) { live.pause(); live.renderAt(s); } }, start: start, phase: function () { return gate.getAttribute('data-phase'); }, skip: function () { $('#cineSkip').click(); } };
 })();
 </script>
 <script>if ('serviceWorker' in navigator) { var hadSW = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { var g = document.getElementById('gate'); if (hadSW && !reloaded && g && !g.classList.contains('off') && !window.__mcIntroBusy) { reloaded = true; location.reload(); } }); window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); }); }</script>
