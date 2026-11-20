@@ -6571,12 +6571,14 @@ window.KyrosLive = (function () {
 </script>
 <script>(function () {
   'use strict';
-  // the start page: a black screen, one tap, the intro film plays whole with sound; when it ends, the King keeps kneeling
-  // and breathing (the loop, with its sound) for as long as the page is open, and the lesson picker rises over him.
+  // the start page: a black screen, one tap, the intro film plays whole with sound. The lesson picker rises the moment the
+  // Queen reaches the King's back, and the film plays on beneath it; when it ends, the King keeps kneeling and breathing
+  // (the loop, with its sound) for as long as the page is open.
   // A lesson starts the moment its card is picked.
   var $ = function (s) { return document.querySelector(s); };
   var gate = $('#gate'), vid = $('#cineVideo'), still = $('#cineStill');
   var SRC = 'media/intro-7d4d5c75b4.mp4', STILL = 'media/intro-end-09eeed88aa.jpg', MASK = '', SPLASH = 'media/intro-splash-9e3c5b0e30.jpg', LOOP = 'media/intro-loop-9e6f47441e.mp4', LOOPWAV = 'media/intro-loop-c9bb2854c7.wav', SEEN = 'macroclass.introSeen';
+  var PICK_AT = 15.9;   // the lessons rise the moment the Queen reaches the King's back (her last step lands at 15.85 s); the film plays on beneath them
   var SPLASH_MS = 900;   // the King's close-up, alone, for a moment before the film (longer if the film is still loading)
   var WAIT_MS = 25000;   // a film that has not started after this long (a very slow connection) gives way to the still
   var started = false, picked = false, watchdog = 0, filmDone = false, loopPreloaded = false;
@@ -6802,6 +6804,7 @@ window.KyrosLive = (function () {
     (function tick() {
       if (filmDone || started) return;
       if (vid.ended || (vid.duration && vid.currentTime >= vid.duration - 0.04)) { afterFilm(); return; }
+      if (!picked && vid.currentTime >= PICK_AT) settle();
       // the loop downloads once the film itself is safely loaded, so the two never compete for a slow connection
       if (!loopPreloaded && vid.duration && vid.buffered.length && vid.buffered.end(vid.buffered.length - 1) >= vid.duration - 0.3) preloadLoop();
       requestAnimationFrame(tick);
