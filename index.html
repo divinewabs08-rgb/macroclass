@@ -979,6 +979,28 @@ html.touchdev .fzeng, html.touchdev .fzcard { display: none !important; }
   html.touchdev #coachCard { grid-area: all; align-self: end; z-index: 30; margin-bottom: 66px; }
   html.touchdev .transport { grid-area: all; align-self: end; z-index: 31; }
 }
+
+/* phones and tablets while the lesson plays: the board, and one block of writing under it; nothing over the board */
+html.touchdev .spkplate, html.touchdev .focusbar { display: none !important; }
+html.touchdev.focus #titlecard { display: none !important; }
+.fzdock { display: none; }
+html.touchdev.focus .fzdock { display: flex; position: fixed; left: 50%; bottom: max(10px, 1.6vh, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 70; flex-direction: column; align-items: center; gap: 6px; width: min(880px, 94vw); pointer-events: none; }
+html.touchdev .fzdock .row { display: contents; }
+html.touchdev .fzdock .subline { position: static; left: auto; bottom: auto; transform: none; max-width: 100%; }
+html.touchdev .fzdock .mtag { position: static; left: auto; top: auto; transform: none; max-width: 100%; display: none; padding: 5px 12px; }
+html.touchdev .fzdock .mtag.on { display: flex; }
+html.touchdev .fzdock .mtag span { font-size: 10px; }
+html.touchdev .fzdock .mtag b { font-size: 15px; }
+html.touchdev .fzdock .fzring { position: static; left: auto; bottom: auto; transform: none; display: none; }
+html.touchdev .fzdock .fzring.on { display: flex; }
+html.touchdev .fzdock .fzring svg { width: 28px; height: 28px; }
+/* phone on its side: the name and the countdown sit beside the script line, so the block stays one line high */
+@media (max-height: 560px) {
+  html.touchdev.focus .fzdock { flex-direction: row; justify-content: center; bottom: max(6px, env(safe-area-inset-bottom)); gap: 10px; width: 96vw; }
+  html.touchdev .fzdock .subline { max-width: none; flex: 0 1 auto; font-size: 12.5px; line-height: 1.3; padding: 5px 10px; }
+  html.touchdev .fzdock .mtag b { font-size: 13px; }
+  html.touchdev #boardbox { padding-top: 10px; padding-bottom: 68px; }
+}
 </style>
 </head>
 <body>
@@ -4848,7 +4870,17 @@ window.COURSE_ORDER = ['foundation', 'smith', 'byrne', 'parma'].filter(function 
   // and notes appearing around it are ignored
   var lockKey = '';
   // phones and tablets: only the board and the script, in full screen, and the board never moves
-  var TOUCH = !!(window.matchMedia && matchMedia('(hover: none) and (pointer: coarse)').matches);
+  // (a finger is the main pointer; or the browser names a phone or tablet; or an iPad or an Android tablet asks for the desktop site)
+  var TOUCH = (function () {
+    try {
+      var mm = function (q) { return !!(window.matchMedia && matchMedia(q).matches); }, ua = navigator.userAgent || '', tp = navigator.maxTouchPoints || 0;
+      if (mm('(pointer: coarse)')) return true;
+      if (/Android|iPhone|iPad|iPod|Mobile|Silk|Kindle|Tablet/i.test(ua)) return true;
+      if (tp > 1 && /Macintosh/.test(ua)) return true;
+      if (tp > 1 && /X11|Linux/.test(ua) && mm('(any-pointer: coarse)')) return true;
+    } catch (e) { /* not a touch screen */ }
+    return false;
+  })();
   if (TOUCH) document.documentElement.classList.add('touchdev');
   // a touch screen keeps its board size while the browser's own bars come and go (only width and orientation count)
   function viewKey() { return TOUCH ? window.innerWidth + ':' + (window.innerWidth > window.innerHeight ? 'l' : 'p') + ':' + boardScaleV : window.innerWidth + 'x' + window.innerHeight + ':' + boardScaleV; }
@@ -5804,12 +5836,25 @@ window.COURSE_ORDER = ['foundation', 'smith', 'byrne', 'parma'].filter(function 
     el.innerHTML = '<div class="k">' + esc(card.k || '') + '</div><h4>' + esc(card.t) + '</h4><ol>' + card.l.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ol>';
     el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   }
-  function subline(i) {
+  // phones and tablets: everything written sits in one block under the board (the script line, with the opening's name and
+  // the countdown just above it); nothing is drawn over the board
+  function dock() {
+    var d = $('#fzDock');
+    if (!d) { d = document.createElement('div'); d.id = 'fzDock'; d.className = 'fzdock'; d.setAttribute('aria-hidden', 'true'); d.innerHTML = '<div class="row" id="fzDockRow"></div>'; document.body.appendChild(d); }
+    return d;
+  }
+  function lowHost(row) { return TOUCH ? (row ? (dock(), $('#fzDockRow')) : dock()) : document.body; }
+  function sublineEl() {
     var el = $('#subline');
-    if (!el) { el = document.createElement('div'); el.id = 'subline'; el.className = 'subline'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); }
+    if (!el) { el = document.createElement('div'); el.id = 'subline'; el.className = 'subline'; el.setAttribute('aria-hidden', 'true'); lowHost(false).appendChild(el); }
+    return el;
+  }
+  function subline(i) {
+    var el = sublineEl();
     var st = CH[S.ci] && CH[S.ci].steps[S.si], it = i >= 0 && st && st.items[i];
-    if (!it) { el.classList.remove('on'); return; }
+    if (!it) { if (!el.dataset.title) el.classList.remove('on'); return; }
     if (!it.spk) return;   // the silent countdown keeps the reminder on screen
+    el.dataset.title = '';
     var who = it.who ? '<b class="w-' + it.who + '">' + (it.who === 'C' ? 'Commander' : 'Strategist') + '</b>' : '';
     el.innerHTML = who + '<span>' + it.disp.map(function (d) { return esc(d.v) + (d.k === 't' ? '' : ' '); }).join('') + '</span>';
     el.classList.add('on');
@@ -5902,7 +5947,7 @@ window.COURSE_ORDER = ['foundation', 'smith', 'byrne', 'parma'].filter(function 
     if (!el) {
       el = document.createElement('div'); el.id = 'fzRing'; el.className = 'fzring'; el.setAttribute('aria-hidden', 'true');
       el.innerHTML = '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="3.5"/><circle class="arc" cx="24" cy="24" r="20" fill="none" stroke="#f1cf8b" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="0"/></svg><span>Your command</span>';
-      document.body.appendChild(el);
+      lowHost(true).appendChild(el);
     }
     var stp = CH[S.ci] && CH[S.ci].steps[S.si];
     el.querySelector('span').textContent = stp && /^Scout report/.test(stp.src.tag || '') ? 'Name the army' : 'Your command';
@@ -5946,7 +5991,7 @@ window.COURSE_ORDER = ['foundation', 'smith', 'byrne', 'parma'].filter(function 
   // ---------- montage: a step whose board flashes through many positions in time with its narration clip
   function mtagEl() {
     var el = $('#mtag');
-    if (!el) { el = document.createElement('div'); el.className = 'mtag'; el.id = 'mtag'; el.innerHTML = '<span id="mtK"></span><b id="mtT"></b>'; $('#board').appendChild(el); }
+    if (!el) { el = document.createElement('div'); el.className = 'mtag'; el.id = 'mtag'; el.innerHTML = '<span id="mtK"></span><b id="mtT"></b>'; (TOUCH ? lowHost(true) : $('#board')).appendChild(el); }
     return el;
   }
   function runMontage(step, my, live) {
@@ -6220,6 +6265,13 @@ window.COURSE_ORDER = ['foundation', 'smith', 'byrne', 'parma'].filter(function 
     }
     document.addEventListener('pointerdown', function (e) {
       if (!S.started) return;
+      // phones and tablets never switch views while the lesson plays: a tap pauses it (the controls then show), and a
+      // tap on the board plays on
+      if (TOUCH) {
+        if (root.classList.contains('focus')) { swallowUntil = Date.now() + 700; pause(); return; }
+        if (!S.playing && !isControl(e.target) && e.target.closest && e.target.closest('#boardbox')) { swallowUntil = Date.now() + 700; play(); }
+        return;
+      }
       if (e.target && e.target.id === 'v3d') return;   // the 3D view handles its own drags and taps
       if (root.classList.contains('focus')) {
         if (bar && bar.contains(e.target) && !root.classList.contains('fz-idle')) { dragging = true; clearTimeout(idleTimer); return; }
@@ -6245,7 +6297,20 @@ window.COURSE_ORDER = ['foundation', 'smith', 'byrne', 'parma'].filter(function 
     window.__pircFocus = { tap: tap3d, centre: centre, showBar: showBar, state: function () { return { focus: root.classList.contains('focus'), idle: root.classList.contains('fz-idle'), scriptView: scriptView }; } };
     syncRange(); apply();
   })();
-  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { $('#btnFull').setAttribute('aria-pressed', String(isFull())); setTimeout(sizeBoard, 60); }); });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { $('#btnFull').setAttribute('aria-pressed', String(isFull())); setTimeout(function () { sizeBoard(TOUCH ? true : undefined); }, 60); }); });
+  // phones and tablets: a chapter's title goes into the script line instead of over the board
+  if (TOUCH) (function () {
+    var tc = $('#titlecard');
+    function sync() {
+      var el = sublineEl();
+      if (tc.classList.contains('on') && document.documentElement.classList.contains('focus')) {
+        var k = $('#tcK').textContent, t = $('#tcT').textContent;
+        el.innerHTML = (k ? '<b>' + esc(k) + '</b>' : '') + '<span>' + esc(t) + '</span>'; el.dataset.title = '1'; el.classList.add('on');
+      } else if (el.dataset.title && !document.documentElement.classList.contains('focus')) { el.dataset.title = ''; el.classList.remove('on'); }
+      // (after the title the chapter's name stays in the script line until the first words are spoken)
+    }
+    new MutationObserver(sync).observe(tc, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true, characterData: true });
+  })();
   // ---------- start gate
   function begin() {
     try { AC = AC || window.__kyrosAC || new (window.AudioContext || window.webkitAudioContext)(); window.__kyrosAC = AC; if (AC.state === 'suspended') AC.resume(); } catch (e) { AC = null; }
